@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/israelroldan/env-vars-doctor/compare/v1.0.0...v1.0.1) (2026-01-01)
+
+
+### Bug Fixes
+
+* specify pnpm version for CI ([887c27f](https://github.com/israelroldan/env-vars-doctor/commit/887c27f2846ced7dacaf58e48b509c677978d4f3))
+
 ## 1.0.0 (2026-01-01)
 
 
