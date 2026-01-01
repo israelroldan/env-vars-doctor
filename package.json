@@ -1,6 +1,6 @@
 {
   "name": "env-vars-doctor",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Environment variable management for monorepos - sync, validate, and diagnose .env files across workspaces",
   "keywords": [
