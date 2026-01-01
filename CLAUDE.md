@@ -13,19 +13,19 @@ pnpm lint           # ESLint on src/
 
 ## Architecture Overview
 
-env-doctor is a CLI tool for managing environment variables across monorepos. It parses `.env.local.example` schema files with directive comments and syncs them to `.env.local` files.
+env-vars-doctor is a CLI tool for managing environment variables across monorepos. It parses `.env.local.example` schema files with directive comments and syncs them to `.env.local` files.
 
 ### Entry Points
 - `src/cli.ts` - CLI entry point with argument parsing and command dispatch
 - `src/index.ts` - Library exports for programmatic use
-- `bin/env-doctor.js` - Node executable wrapper
+- `bin/env-vars-doctor.js` - Node executable wrapper
 
 ### Core Modules (`src/core/`)
 - `parser.ts` - Parses `.env.example` files, extracting directives from comments (e.g., `[required]`, `[prompt]`, `[default:value]`)
 - `scanner.ts` - Detects monorepo workspaces using pnpm/npm/yarn workspace configs
 - `source-scanner.ts` - Scans source code for `process.env` usage to find undocumented or unused variables
 - `reconciler.ts` - Compares schema definitions against actual `.env.local` values
-- `config.ts` - Configuration loading via cosmiconfig (supports `.ts`, `.js`, `.json`, `.env-doctorrc`)
+- `config.ts` - Configuration loading via cosmiconfig (supports `.ts`, `.js`, `.json`, `.env-vars-doctorrc`)
 - `reporter.ts` - Terminal output formatting
 - `types.ts` - All TypeScript interfaces and types
 
@@ -38,7 +38,7 @@ Each module handles a specific directive type:
 - `local-only.ts` - Variables skipped in CI for `[local-only]` directive
 
 ### Plugin System (`src/plugins/`)
-- `types.ts` - Plugin interface definitions (exported as `env-doctor/plugins`)
+- `types.ts` - Plugin interface definitions (exported as `env-vars-doctor/plugins`)
 - `registry.ts` - Plugin registration and lifecycle hook management
 - `loader.ts` - Loads built-in and external plugins from config
 

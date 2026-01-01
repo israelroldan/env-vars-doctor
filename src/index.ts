@@ -1,5 +1,5 @@
 /**
- * env-doctor - Environment variable management for monorepos
+ * env-vars-doctor - Environment variable management for monorepos
  *
  * @packageDocumentation
  */

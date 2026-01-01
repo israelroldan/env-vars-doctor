@@ -1,4 +1,4 @@
-# env-doctor
+# env-vars-doctor
 
 Environment variable management for monorepos - sync, validate, and diagnose `.env` files across workspaces.
 
@@ -14,11 +14,11 @@ Environment variable management for monorepos - sync, validate, and diagnose `.e
 ## Installation
 
 ```bash
-npm install env-doctor
+npm install env-vars-doctor
 # or
-pnpm add env-doctor
+pnpm add env-vars-doctor
 # or
-yarn add env-doctor
+yarn add env-vars-doctor
 ```
 
 ## Quick Start
@@ -39,13 +39,13 @@ DEBUG=false
 2. Run sync to create your `.env.local`:
 
 ```bash
-npx env-doctor sync
+npx env-vars-doctor sync
 ```
 
 3. Check status anytime:
 
 ```bash
-npx env-doctor status
+npx env-vars-doctor status
 ```
 
 ## Schema Directives
@@ -105,9 +105,9 @@ HOT_RELOAD=true
 Create or update `.env.local` files from schema:
 
 ```bash
-env-doctor sync              # Sync current app
-env-doctor sync --all        # Sync all workspaces
-env-doctor sync --force      # Overwrite existing values
+env-vars-doctor sync              # Sync current app
+env-vars-doctor sync --all        # Sync all workspaces
+env-vars-doctor sync --force      # Overwrite existing values
 ```
 
 ### `status`
@@ -115,8 +115,8 @@ env-doctor sync --force      # Overwrite existing values
 Show environment variable status:
 
 ```bash
-env-doctor status            # Current app status
-env-doctor status --all      # All workspaces
+env-vars-doctor status            # Current app status
+env-vars-doctor status --all      # All workspaces
 ```
 
 ### `check`
@@ -124,8 +124,8 @@ env-doctor status --all      # All workspaces
 Validate environment without prompts:
 
 ```bash
-env-doctor check             # Exit 1 if issues found
-env-doctor check --ci        # CI-optimized output
+env-vars-doctor check             # Exit 1 if issues found
+env-vars-doctor check --ci        # CI-optimized output
 ```
 
 ### `diagnose`
@@ -133,8 +133,8 @@ env-doctor check --ci        # CI-optimized output
 Scan source code for environment issues:
 
 ```bash
-env-doctor diagnose          # Find undocumented env vars
-env-doctor diagnose --fix    # Add missing to schema
+env-vars-doctor diagnose          # Find undocumented env vars
+env-vars-doctor diagnose --fix    # Add missing to schema
 ```
 
 ### `clean`
@@ -142,8 +142,8 @@ env-doctor diagnose --fix    # Add missing to schema
 Remove generated `.env.local` files:
 
 ```bash
-env-doctor clean             # Current app
-env-doctor clean --all       # All workspaces
+env-vars-doctor clean             # Current app
+env-vars-doctor clean --all       # All workspaces
 ```
 
 ### `export`
@@ -151,17 +151,17 @@ env-doctor clean --all       # All workspaces
 Export variables for deployment:
 
 ```bash
-env-doctor export --format=vercel   # Vercel format
-env-doctor export --format=shell    # Shell export format
-env-doctor export --format=json     # JSON format
+env-vars-doctor export --format=vercel   # Vercel format
+env-vars-doctor export --format=shell    # Shell export format
+env-vars-doctor export --format=json     # JSON format
 ```
 
 ## Configuration
 
-Create `env-doctor.config.ts` (or `.js`, `.json`, `.env-doctorrc`):
+Create `env-vars-doctor.config.ts` (or `.js`, `.json`, `.env-vars-doctorrc`):
 
 ```typescript
-import { defineConfig } from 'env-doctor'
+import { defineConfig } from 'env-vars-doctor'
 
 export default defineConfig({
   project: {
@@ -202,7 +202,7 @@ export default defineConfig({
 Auto-fetch keys from local Supabase:
 
 ```typescript
-import { defineConfig } from 'env-doctor'
+import { defineConfig } from 'env-vars-doctor'
 
 export default defineConfig({
   plugins: {
@@ -230,7 +230,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 Deploy environment variables to Vercel:
 
 ```typescript
-import { defineConfig } from 'env-doctor'
+import { defineConfig } from 'env-vars-doctor'
 
 export default defineConfig({
   plugins: {
@@ -246,7 +246,7 @@ export default defineConfig({
 ```
 
 ```bash
-env-doctor deploy --target=production
+env-vars-doctor deploy --target=production
 ```
 
 ### Custom Plugins
@@ -254,7 +254,7 @@ env-doctor deploy --target=production
 Create custom value sources:
 
 ```typescript
-import type { EnvDoctorPlugin, ValueSourceProvider } from 'env-doctor/plugins'
+import type { EnvDoctorPlugin, ValueSourceProvider } from 'env-vars-doctor/plugins'
 
 const myPlugin: EnvDoctorPlugin = {
   meta: {
@@ -281,7 +281,7 @@ export default myPlugin
 ## Programmatic API
 
 ```typescript
-import { EnvDoctor, loadConfig } from 'env-doctor'
+import { EnvDoctor, loadConfig } from 'env-vars-doctor'
 
 const config = await loadConfig()
 const doctor = new EnvDoctor(config)
@@ -305,7 +305,7 @@ const report = doctor.report(diff)
 
 ```yaml
 - name: Validate environment
-  run: npx env-doctor check --ci
+  run: npx env-vars-doctor check --ci
   env:
     CI: true
 ```

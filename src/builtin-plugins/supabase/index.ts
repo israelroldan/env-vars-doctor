@@ -189,7 +189,7 @@ async function resolveSupabaseValue(
     return {
       value: placeholder,
       source: 'placeholder',
-      warning: `Supabase CLI not installed. Using placeholder for ${definition.name}. Install with 'brew install supabase/tap/supabase' then run 'env-doctor sync' again.`,
+      warning: `Supabase CLI not installed. Using placeholder for ${definition.name}. Install with 'brew install supabase/tap/supabase' then run 'env-vars-doctor sync' again.`,
     }
   }
 
@@ -200,7 +200,7 @@ async function resolveSupabaseValue(
     return {
       value: placeholder,
       source: 'placeholder',
-      warning: `Supabase not running. Using placeholder for ${definition.name}. Run 'cd ${databaseDir} && pnpm db:start' then 'env-doctor sync' again.`,
+      warning: `Supabase not running. Using placeholder for ${definition.name}. Run 'cd ${databaseDir} && pnpm db:start' then 'env-vars-doctor sync' again.`,
     }
   }
 
@@ -249,7 +249,7 @@ export function createSupabasePlugin(config: SupabasePluginConfig = {}): EnvDoct
 
   return {
     meta: {
-      name: 'env-doctor-plugin-supabase',
+      name: 'env-vars-doctor-plugin-supabase',
       version: '1.0.0',
       description: 'Fetch environment variables from local Supabase instance',
     },

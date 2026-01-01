@@ -70,7 +70,7 @@ export const DEFAULT_CONFIG: Required<EnvDoctorConfig> = {
 /**
  * Module name for cosmiconfig
  */
-const MODULE_NAME = 'env-doctor'
+const MODULE_NAME = 'env-vars-doctor'
 
 /**
  * Create the cosmiconfig explorer
@@ -201,7 +201,7 @@ export async function loadConfig(searchFrom?: string): Promise<LoadConfigResult>
   } catch (error) {
     // Config file has syntax errors
     throw new Error(
-      `Failed to load env-doctor config: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to load env-vars-doctor config: ${error instanceof Error ? error.message : String(error)}`
     )
   }
 
@@ -238,7 +238,7 @@ export async function loadConfigFromFile(filepath: string): Promise<LoadConfigRe
     result = await explorer.load(filepath)
   } catch (error) {
     throw new Error(
-      `Failed to load env-doctor config from ${filepath}: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to load env-vars-doctor config from ${filepath}: ${error instanceof Error ? error.message : String(error)}`
     )
   }
 
@@ -265,12 +265,12 @@ export async function loadConfigFromFile(filepath: string): Promise<LoadConfigRe
 // =============================================================================
 
 /**
- * Define an env-doctor configuration with type checking
+ * Define an env-vars-doctor configuration with type checking
  *
  * @example
  * ```ts
- * // env-doctor.config.ts
- * import { defineConfig } from 'env-doctor'
+ * // env-vars-doctor.config.ts
+ * import { defineConfig } from 'env-vars-doctor'
  *
  * export default defineConfig({
  *   project: {
@@ -307,7 +307,7 @@ export function isCI(config: Required<EnvDoctorConfig>): boolean {
 }
 
 /**
- * Check if env-doctor should be skipped
+ * Check if env-vars-doctor should be skipped
  */
 export function shouldSkip(config: Required<EnvDoctorConfig>): boolean {
   const skipVar = config.ci.skipEnvVar

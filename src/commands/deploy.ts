@@ -442,7 +442,7 @@ export async function runDeploy(options: DeployOptions): Promise<number> {
       const localVal = rootLocal.get(key)
       if (!localVal) {
         fatalMissingLocal.push(
-          `Shared var ${key} missing remotely and no local value. Run "pnpm env-doctor" first.`
+          `Shared var ${key} missing remotely and no local value. Run "pnpm env-vars-doctor" first.`
         )
       }
       proposedChanges.push(`Shared: add ${key} with targets production + preview/development`)
@@ -587,7 +587,7 @@ export async function runDeploy(options: DeployOptions): Promise<number> {
             const localVal = appLocal.get(key) || rootLocal.get(key)
             if (!localVal) {
               fatalMissingLocal.push(
-                `${appInfo.name}: ${key} missing remotely and no local value. Run "pnpm env-doctor --app=${appInfo.name}" first.`
+                `${appInfo.name}: ${key} missing remotely and no local value. Run "pnpm env-vars-doctor --app=${appInfo.name}" first.`
               )
             }
             appProposed.push(`${appInfo.name}: add ${key} with targets production + preview/development`)
@@ -636,7 +636,7 @@ export async function runDeploy(options: DeployOptions): Promise<number> {
 
   if (fatalMissingLocal.length > 0) {
     reporter.printError(
-      'Cannot proceed: some missing env vars have no local value. Run "pnpm env-doctor" first.'
+      'Cannot proceed: some missing env vars have no local value. Run "pnpm env-vars-doctor" first.'
     )
     fatalMissingLocal.forEach((msg) => reporter.printError(`- ${msg}`))
     return 1

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * env-doctor CLI
+ * env-vars-doctor CLI
  */
 
 import { loadConfig } from './core/config.js'
@@ -86,10 +86,10 @@ function parseArgs(args: string[]): ParsedArgs {
 
 function printHelp(): void {
   console.log(`
-env-doctor - Environment variable management for monorepos
+env-vars-doctor - Environment variable management for monorepos
 
 Usage:
-  env-doctor [command] [options]
+  env-vars-doctor [command] [options]
 
 Commands:
   sync        Create or update .env.local files (default)
@@ -112,16 +112,16 @@ Options:
   --version, -v    Show version
 
 Examples:
-  env-doctor                    # Sync current app or all apps
-  env-doctor sync --all         # Sync all apps
-  env-doctor status             # Show status
-  env-doctor diagnose           # Check for missing/unused vars
-  env-doctor export --format=vercel
+  env-vars-doctor                    # Sync current app or all apps
+  env-vars-doctor sync --all         # Sync all apps
+  env-vars-doctor status             # Show status
+  env-vars-doctor diagnose           # Check for missing/unused vars
+  env-vars-doctor export --format=vercel
 `)
 }
 
 function printVersion(): void {
-  console.log('env-doctor v0.1.0')
+  console.log('env-vars-doctor v0.1.0')
 }
 
 // =============================================================================

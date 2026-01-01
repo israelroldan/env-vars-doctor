@@ -1,5 +1,5 @@
 /**
- * Terminal output formatting for env-doctor
+ * Terminal output formatting for env-vars-doctor
  */
 
 import type { ReconciliationResult, ReporterOptions } from './types.js'
@@ -79,7 +79,7 @@ function s(symbol: keyof typeof symbols): string {
  */
 export function printHeader(): void {
   console.log('')
-  console.log(`${s('doctor')} ${c('bright')}env-doctor${c('reset')}`)
+  console.log(`${s('doctor')} ${c('bright')}env-vars-doctor${c('reset')}`)
   console.log('')
 }
 
@@ -295,7 +295,7 @@ export function printStatusReport(results: ReconciliationResult[]): void {
 /**
  * Print help for next steps
  */
-export function printNextSteps(hasWarnings: boolean, command: string = 'env-doctor'): void {
+export function printNextSteps(hasWarnings: boolean, command: string = 'env-vars-doctor'): void {
   if (hasWarnings) {
     console.log(`${c('dim')}Run '${command} status' to see full report.${c('reset')}`)
     console.log('')
@@ -333,13 +333,13 @@ function drawBox(title: string, lines: string[]): string {
  * Print a boxed postinstall message
  */
 function printPostinstallBox(contentLines: string[], isOk: boolean): void {
-  const title = 'env-doctor'
+  const title = 'env-vars-doctor'
   const lines = [...contentLines]
 
   if (!isOk) {
     lines.push('')
     lines.push('To configure, run from repo root or any app:')
-    lines.push('  env-doctor sync')
+    lines.push('  env-vars-doctor sync')
   }
 
   console.log('')
@@ -381,7 +381,7 @@ export function printPostinstallOk(): void {
  * Print CI mode header
  */
 export function printCiHeader(): void {
-  console.log(`${s('doctor')} ${c('bright')}env-doctor${c('reset')} ${c('dim')}(CI)${c('reset')}`)
+  console.log(`${s('doctor')} ${c('bright')}env-vars-doctor${c('reset')} ${c('dim')}(CI)${c('reset')}`)
   console.log('')
 }
 
@@ -456,7 +456,7 @@ export function printCiSummary(
  */
 export function printDiagnoseHeader(): void {
   console.log('')
-  console.log(`${s('doctor')} ${c('bright')}env-doctor diagnose${c('reset')}`)
+  console.log(`${s('doctor')} ${c('bright')}env-vars-doctor diagnose${c('reset')}`)
   console.log('')
 }
 

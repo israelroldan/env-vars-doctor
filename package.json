@@ -1,5 +1,5 @@
 {
-  "name": "env-doctor",
+  "name": "env-vars-doctor",
   "version": "0.1.0",
   "type": "module",
   "description": "Environment variable management for monorepos - sync, validate, and diagnose .env files across workspaces",
@@ -12,17 +12,17 @@
     "cli",
     "validation"
   ],
-  "author": "TATOMA",
+  "author": "Israel Roldan",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tatomahq/env-doctor"
+    "url": "https://github.com/israelroldan/env-vars-doctor"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "env-doctor": "./bin/env-doctor.js"
+    "env-vars-doctor": "./bin/env-vars-doctor.js"
   },
   "exports": {
     ".": {

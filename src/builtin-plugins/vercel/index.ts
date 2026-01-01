@@ -293,7 +293,7 @@ export function createVercelPlugin(config: VercelPluginConfig = {}): EnvDoctorPl
 
   return {
     meta: {
-      name: 'env-doctor-plugin-vercel',
+      name: 'env-vars-doctor-plugin-vercel',
       version: '1.0.0',
       description: 'Deploy environment variables to Vercel projects',
     },

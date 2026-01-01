@@ -70,7 +70,7 @@ const DEFAULT_SKIP_DIRS = new Set([
   '__snapshots__',
 ])
 
-const DEFAULT_SKIP_FILES = new Set(['env-doctor.ts', 'env-doctor.js'])
+const DEFAULT_SKIP_FILES = new Set(['env-vars-doctor.ts', 'env-vars-doctor.js'])
 
 // =============================================================================
 // Regex Patterns

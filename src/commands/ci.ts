@@ -31,7 +31,7 @@ export async function runCi(options: CiOptions): Promise<number> {
 
   // Check if we should skip
   if (shouldSkip(config)) {
-    reporter.printInfo('Skipping env-doctor check (skip env var is set)')
+    reporter.printInfo('Skipping env-vars-doctor check (skip env var is set)')
     return 0
   }
 

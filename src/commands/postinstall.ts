@@ -99,18 +99,18 @@ export async function runPostinstall(options: PostinstallOptions): Promise<numbe
     const reqCount = missingRequiredSet.size
     const optCount = missingOptionalSet.size
 
-    let message = 'env-doctor\n\n'
+    let message = 'env-vars-doctor\n\n'
     if (reqCount > 0) {
       message += `${reqCount} required variable${reqCount > 1 ? 's' : ''} missing\n`
     }
     if (optCount > 0) {
       message += `${optCount} optional variable${optCount > 1 ? 's' : ''} missing\n`
     }
-    message += '\nRun: pnpm env-doctor'
+    message += '\nRun: pnpm env-vars-doctor'
 
     printBox(message)
   } else {
-    printBox('env-doctor\n\nEnvironment ready')
+    printBox('env-vars-doctor\n\nEnvironment ready')
   }
 
   // Never fail locally

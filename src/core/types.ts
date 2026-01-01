@@ -1,5 +1,5 @@
 /**
- * env-doctor core type definitions
+ * env-vars-doctor core type definitions
  */
 
 // =============================================================================
@@ -257,7 +257,7 @@ export interface ScanningConfig {
  * CI configuration
  */
 export interface CIConfig {
-  /** Environment variable that skips env-doctor when set */
+  /** Environment variable that skips env-vars-doctor when set */
   skipEnvVar?: string
   /** Directives to skip in CI mode */
   skipDirectives?: string[]
@@ -428,7 +428,7 @@ export interface CommandProvider {
  * Plugin lifecycle hooks
  */
 export interface PluginHooks {
-  /** Called when env-doctor initializes */
+  /** Called when env-vars-doctor initializes */
   onInit?: (config: EnvDoctorConfig) => Promise<void> | void
   /** Called before sync starts */
   beforeSync?: (apps: AppInfo[]) => Promise<void> | void
