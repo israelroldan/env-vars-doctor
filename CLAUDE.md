@@ -67,4 +67,4 @@ Uses [release-please](https://github.com/googleapis/release-please) for automate
 2. Release-please automatically creates/updates a Release PR with changelog
 3. Merging the Release PR triggers npm publish via GitHub Actions
 
-Requires `NPM_TOKEN` secret configured in the repository.
+Uses npm trusted publishing (OIDC) - no secrets required. Configure trusted publisher on npmjs.com with workflow `release.yml`.
