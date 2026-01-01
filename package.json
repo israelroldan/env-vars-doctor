@@ -1,0 +1,65 @@
+{
+  "name": "env-doctor",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Environment variable management for monorepos - sync, validate, and diagnose .env files across workspaces",
+  "keywords": [
+    "env",
+    "environment",
+    "dotenv",
+    "monorepo",
+    "workspace",
+    "cli",
+    "validation"
+  ],
+  "author": "TATOMA",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tatomahq/env-doctor"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "env-doctor": "./bin/env-doctor.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./plugins": {
+      "types": "./dist/plugins/types.d.ts",
+      "import": "./dist/plugins/types.js",
+      "require": "./dist/plugins/types.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "cosmiconfig": "^9.0.0",
+    "cosmiconfig-typescript-loader": "^6.1.0",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsup": "^8.0.0",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
