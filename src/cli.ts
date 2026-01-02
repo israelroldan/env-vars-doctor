@@ -3,7 +3,11 @@
  * env-vars-doctor CLI
  */
 
+import { createRequire } from 'node:module'
 import { loadConfig } from './core/config.js'
+
+const require = createRequire(import.meta.url)
+const { version } = require('../package.json')
 import { loadPlugins } from './plugins/loader.js'
 import { executeOnInitHooks } from './plugins/registry.js'
 import { detectMonorepoRoot } from './core/scanner.js'
@@ -32,6 +36,8 @@ interface ParsedArgs {
   all?: boolean
   format?: string
   target?: string
+  dryRun?: boolean
+  quiet?: boolean
   help?: boolean
   version?: boolean
 }
@@ -67,6 +73,10 @@ function parseArgs(args: string[]): ParsedArgs {
       result.target = arg.split('=')[1]
     } else if (arg === '--target' && args[i + 1]) {
       result.target = args[++i]
+    } else if (arg === '--dry-run') {
+      result.dryRun = true
+    } else if (arg === '--quiet' || arg === '-q') {
+      result.quiet = true
     } else if (!arg.startsWith('-')) {
       // First non-flag argument is the command
       if (!result.command || result.command === 'sync') {
@@ -106,6 +116,8 @@ Options:
   --all, -a        Process all apps
   --force, -f      Overwrite existing values
   --verbose        Verbose output
+  --quiet, -q      Minimal output
+  --dry-run        Preview changes without applying
   --format <fmt>   Export format (vercel, shell, json)
   --target <env>   Deployment target
   --help, -h       Show help
@@ -121,7 +133,7 @@ Examples:
 }
 
 function printVersion(): void {
-  console.log('env-vars-doctor v0.1.0')
+  console.log(`env-vars-doctor v${version}`)
 }
 
 // =============================================================================
@@ -162,6 +174,8 @@ async function main(): Promise<void> {
       force: args.force,
       format: args.format,
       target: args.target,
+      dryRun: args.dryRun,
+      quiet: args.quiet,
       rootDir,
       config,
     }
