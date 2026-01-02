@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/israelroldan/env-vars-doctor/compare/v1.1.0...v1.1.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* CLI improvements ([962d86d](https://github.com/israelroldan/env-vars-doctor/commit/962d86d162ebf506ef934a9f4f639cb2104f1ab1))
+
 ## [1.1.0](https://github.com/israelroldan/env-vars-doctor/compare/v1.0.1...v1.1.0) (2026-01-02)
 
 
