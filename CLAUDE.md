@@ -49,6 +49,20 @@ Each module handles a specific directive type:
 ### Commands (`src/commands/`)
 Each command is a separate module: `sync.ts`, `status.ts`, `check.ts`, `diagnose.ts`, `clean.ts`, `ci.ts`, `export.ts`, `deploy.ts`, `postinstall.ts`
 
+## Testing
+
+A `sandbox/` directory contains a mock monorepo for manual testing:
+
+```bash
+cd sandbox
+node ../bin/env-vars-doctor.js status     # Show missing variables
+node ../bin/env-vars-doctor.js diagnose   # Find undocumented env vars
+node ../bin/env-vars-doctor.js sync       # Interactive sync flow
+node ../bin/env-vars-doctor.js --help     # CLI help
+```
+
+The sandbox includes two apps (`web`, `api`), a shared package (`database`), and intentionally has an undocumented `SECRET_FEATURE_FLAG` variable for testing `diagnose`.
+
 ## Key Patterns
 
 - ESM-first with CJS build output (dual format via tsup)

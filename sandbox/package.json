@@ -1,0 +1,7 @@
+{
+  "name": "sandbox-monorepo",
+  "private": true,
+  "scripts": {
+    "env-doctor": "node ../bin/env-vars-doctor.js"
+  }
+}
