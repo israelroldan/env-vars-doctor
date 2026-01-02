@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/israelroldan/env-vars-doctor/compare/v1.0.1...v1.1.0) (2026-01-02)
+
+
+### Features
+
+* Add lockfile ([4b65c2f](https://github.com/israelroldan/env-vars-doctor/commit/4b65c2f55ff3d8be809c7794ddb47cb29e43cb02))
+
 ## [1.0.1](https://github.com/israelroldan/env-vars-doctor/compare/v1.0.0...v1.0.1) (2026-01-01)
 
 
