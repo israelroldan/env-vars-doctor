@@ -23,13 +23,13 @@ describe('reporter', () => {
     it('should enable and disable colors', () => {
       reporter.setColorsEnabled(true)
       reporter.printHeader()
-      const withColors = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const withColors = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
 
       consoleLogSpy.mockClear()
 
       reporter.setColorsEnabled(false)
       reporter.printHeader()
-      const withoutColors = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const withoutColors = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
 
       // Without colors, there should be no ANSI escape codes
       expect(withoutColors).not.toMatch(/\x1b\[/)
@@ -39,7 +39,7 @@ describe('reporter', () => {
   describe('basic output', () => {
     it('should print header', () => {
       reporter.printHeader()
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('env-vars-doctor')
     })
 
@@ -163,40 +163,40 @@ describe('reporter', () => {
   describe('summary', () => {
     it('should print basic summary', () => {
       reporter.printSummary(3, 0, 0, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('Summary')
       expect(output).toContain('3 apps checked')
     })
 
     it('should print summary with singular app', () => {
       reporter.printSummary(1, 0, 0, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('1 app checked')
     })
 
     it('should print summary with variables added', () => {
       reporter.printSummary(1, 5, 0, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('5')
       expect(output).toContain('variables added')
     })
 
     it('should print summary with singular variable added', () => {
       reporter.printSummary(1, 1, 0, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('1')
       expect(output).toContain('variable added')
     })
 
     it('should print summary with variables skipped', () => {
       reporter.printSummary(1, 0, 3, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('3 optional variables skipped')
     })
 
     it('should print summary with warnings', () => {
       reporter.printSummary(1, 0, 0, 2)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('2 warnings')
     })
   })
@@ -223,7 +223,7 @@ describe('reporter', () => {
 
     it('should print status report header', () => {
       reporter.printStatusReport([])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('Environment Status Report')
     })
 
@@ -237,7 +237,7 @@ describe('reporter', () => {
         overrides: new Map(),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('web')
     })
 
@@ -251,7 +251,7 @@ describe('reporter', () => {
         overrides: new Map(),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('2')
       expect(output).toContain('configured')
     })
@@ -266,7 +266,7 @@ describe('reporter', () => {
         overrides: new Map(),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('1')
       expect(output).toContain('required missing')
       expect(output).toContain('MISSING_VAR')
@@ -282,7 +282,7 @@ describe('reporter', () => {
         overrides: new Map(),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('optional missing')
       expect(output).toContain('OPT_VAR')
     })
@@ -297,7 +297,7 @@ describe('reporter', () => {
         overrides: new Map([['SHARED_VAR', 'local_value']]),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('overriding shared')
       expect(output).toContain('SHARED_VAR')
     })
@@ -312,7 +312,7 @@ describe('reporter', () => {
         overrides: new Map(),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('deprecated')
       expect(output).toContain('OLD_VAR')
     })
@@ -327,7 +327,7 @@ describe('reporter', () => {
         overrides: new Map(),
       }
       reporter.printStatusReport([result])
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('extra')
       expect(output).toContain('not in schema')
       expect(output).toContain('UNKNOWN_VAR')
@@ -337,7 +337,7 @@ describe('reporter', () => {
   describe('help messages', () => {
     it('should print next steps with warnings', () => {
       reporter.printNextSteps(true)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('status')
     })
 
@@ -348,13 +348,13 @@ describe('reporter', () => {
 
     it('should print next steps with custom command', () => {
       reporter.printNextSteps(true, 'npx env-doctor')
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('npx env-doctor')
     })
 
     it('should print nothing to do', () => {
       reporter.printNothingToDo()
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('All environment variables are configured')
     })
   })
@@ -362,27 +362,27 @@ describe('reporter', () => {
   describe('postinstall messages', () => {
     it('should print postinstall action needed with required', () => {
       reporter.printPostinstallActionNeeded(3, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('3 required variables missing')
       expect(output).toContain('env-vars-doctor sync')
     })
 
     it('should print postinstall action needed with optional', () => {
       reporter.printPostinstallActionNeeded(0, 2)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('2 optional variables missing')
     })
 
     it('should print postinstall action needed with singular', () => {
       reporter.printPostinstallActionNeeded(1, 1)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('1 required variable missing')
       expect(output).toContain('1 optional variable missing')
     })
 
     it('should print postinstall ok', () => {
       reporter.printPostinstallOk()
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('Environment ready')
     })
   })
@@ -390,7 +390,7 @@ describe('reporter', () => {
   describe('CI mode', () => {
     it('should print CI header', () => {
       reporter.printCiHeader()
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('env-vars-doctor')
       expect(output).toContain('CI')
     })
@@ -431,27 +431,27 @@ describe('reporter', () => {
 
     it('should print CI summary with no missing', () => {
       reporter.printCiSummary('web', 5, 0, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('All 5 required variables present')
       expect(output).toContain('web')
     })
 
     it('should print CI summary with missing required', () => {
       reporter.printCiSummary('web', 5, 2, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('2 required variables missing')
       expect(output).toContain('Build will fail')
     })
 
     it('should print CI summary with singular missing', () => {
       reporter.printCiSummary('web', 5, 1, 0)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('1 required variable missing')
     })
 
     it('should print CI summary with missing optional', () => {
       reporter.printCiSummary('web', 5, 0, 3)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('3 optional variables not set')
     })
   })
@@ -459,7 +459,7 @@ describe('reporter', () => {
   describe('diagnose mode', () => {
     it('should print diagnose header', () => {
       reporter.printDiagnoseHeader()
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('env-vars-doctor diagnose')
     })
 
@@ -516,34 +516,34 @@ describe('reporter', () => {
 
     it('should print diagnose summary with no issues', () => {
       reporter.printDiagnoseSummary(0, 0, 10)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('10 variables properly defined')
     })
 
     it('should print diagnose summary with missing', () => {
       reporter.printDiagnoseSummary(3, 0, 10)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('3')
       expect(output).toContain('used but not in .env.example')
     })
 
     it('should print diagnose summary with unused', () => {
       reporter.printDiagnoseSummary(0, 2, 10)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('2')
       expect(output).toContain('in schema but not used')
     })
 
     it('should print diagnose next steps with missing', () => {
       reporter.printDiagnoseNextSteps(true)
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('Add missing variables')
       expect(output).toContain('.env.example')
     })
 
     it('should print diagnose next steps with custom file name', () => {
       reporter.printDiagnoseNextSteps(true, '.env.local.example')
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('.env.local.example')
     })
 
@@ -563,7 +563,7 @@ describe('reporter', () => {
   describe('plugin messages', () => {
     it('should print plugin not available', () => {
       reporter.printPluginNotAvailable('supabase', 'Supabase CLI not found')
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('supabase')
       expect(output).toContain('Supabase CLI not found')
     })

@@ -53,8 +53,7 @@ function createValueSource(directiveType: string): ValueSourceProvider {
 function createDeploymentProvider(name: string): DeploymentProvider {
   return {
     name,
-    description: `Deploy to ${name}`,
-    targets: [{ name: 'production', description: 'Production' }],
+    getTargets: vi.fn().mockResolvedValue([{ name: 'production', description: 'Production' }]),
     deploy: vi.fn().mockResolvedValue({ success: true, message: 'Deployed' }),
   }
 }
@@ -262,7 +261,7 @@ describe('registry', () => {
       registerPlugin(createTestPlugin('plugin1', { hooks: { onInit: onInit1 } }))
       registerPlugin(createTestPlugin('plugin2', { hooks: { onInit: onInit2 } }))
 
-      const config = { version: '1' }
+      const config = { version: '1' as const }
       await executeOnInitHooks(config)
 
       expect(onInit1).toHaveBeenCalledWith(config)

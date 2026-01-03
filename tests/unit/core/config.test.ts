@@ -51,10 +51,10 @@ describe('config', () => {
     })
 
     it('should have default workspace config', () => {
-      expect(DEFAULT_CONFIG.project.workspaces.detection).toBe('auto')
-      expect(DEFAULT_CONFIG.project.workspaces.patterns).toContain('apps/*')
-      expect(DEFAULT_CONFIG.project.workspaces.patterns).toContain('packages/*')
-      expect(DEFAULT_CONFIG.project.workspaces.sourceDir).toBe('src')
+      expect(DEFAULT_CONFIG.project.workspaces!.detection).toBe('auto')
+      expect(DEFAULT_CONFIG.project.workspaces!.patterns).toContain('apps/*')
+      expect(DEFAULT_CONFIG.project.workspaces!.patterns).toContain('packages/*')
+      expect(DEFAULT_CONFIG.project.workspaces!.sourceDir).toBe('src')
     })
 
     it('should have default scanning config', () => {
@@ -71,10 +71,10 @@ describe('config', () => {
     })
 
     it('should have CI detection config', () => {
-      expect(DEFAULT_CONFIG.ci.detection.ci).toContain('CI')
-      expect(DEFAULT_CONFIG.ci.detection.github).toContain('GITHUB_ACTIONS')
-      expect(DEFAULT_CONFIG.ci.detection.vercel).toContain('VERCEL')
-      expect(DEFAULT_CONFIG.ci.detection.netlify).toContain('NETLIFY')
+      expect(DEFAULT_CONFIG.ci.detection!.ci).toContain('CI')
+      expect(DEFAULT_CONFIG.ci.detection!.github).toContain('GITHUB_ACTIONS')
+      expect(DEFAULT_CONFIG.ci.detection!.vercel).toContain('VERCEL')
+      expect(DEFAULT_CONFIG.ci.detection!.netlify).toContain('NETLIFY')
     })
   })
 
@@ -331,11 +331,11 @@ describe('config', () => {
       const result = await loadConfig()
 
       // User-specified values
-      expect(result.config.project.workspaces.patterns).toEqual(['apps/*'])
+      expect(result.config.project.workspaces!.patterns).toEqual(['apps/*'])
       expect(result.config.scanning.extensions).toEqual(['.ts'])
       // Default values for unspecified nested fields
-      expect(result.config.project.workspaces.detection).toBe('auto')
-      expect(result.config.project.workspaces.sourceDir).toBe('src')
+      expect(result.config.project.workspaces!.detection).toBe('auto')
+      expect(result.config.project.workspaces!.sourceDir).toBe('src')
     })
 
     it('should handle CI config override', async () => {
@@ -359,7 +359,7 @@ describe('config', () => {
       const result = await loadConfig()
 
       expect(result.config.ci.skipEnvVar).toBe('MY_SKIP_VAR')
-      expect(result.config.ci.detection.custom).toEqual(['MY_CI'])
+      expect(result.config.ci.detection!.custom).toEqual(['MY_CI'])
     })
   })
 

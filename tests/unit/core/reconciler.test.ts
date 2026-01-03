@@ -28,13 +28,13 @@ vi.mock('@/core/scanner.js', () => ({
 
 // Mock parser module
 vi.mock('@/core/parser.js', () => ({
-  parseEnvExample: vi.fn(() => []),
+  parseEnvExample: vi.fn(() => ({ filePath: '/test/.env.example', variables: [] })),
   parseEnvLocal: vi.fn(() => ({
     values: new Map(),
     comments: new Map(),
     originalContent: '',
   })),
-  mergeSchemas: vi.fn((root, app) => [...root, ...app]),
+  mergeSchemas: vi.fn((root, app) => [...root.variables, ...app.variables]),
   updateEnvLocalContent: vi.fn(() => 'NEW_CONTENT'),
 }))
 
@@ -77,6 +77,11 @@ function createEnvLocal(
     comments: new Map(),
     originalContent,
   }
+}
+
+// Helper to create an EnvSchema
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/test/.env.example') {
+  return { filePath, variables }
 }
 
 // Helper to create a minimal config
@@ -274,8 +279,8 @@ describe('reconciler', () => {
       const appVar = createVarDef('APP_VAR')
 
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce([rootVar]) // Root schema
-        .mockReturnValueOnce([appVar]) // App schema
+        .mockReturnValueOnce(createEnvSchema([rootVar])) // Root schema
+        .mockReturnValueOnce(createEnvSchema([appVar])) // App schema
 
       vi.mocked(parser.mergeSchemas).mockReturnValue([rootVar, appVar])
 
@@ -285,14 +290,17 @@ describe('reconciler', () => {
       const result = getAppSchema(app, options)
 
       expect(parser.parseEnvExample).toHaveBeenCalledTimes(2)
-      expect(parser.mergeSchemas).toHaveBeenCalledWith([rootVar], [appVar])
+      expect(parser.mergeSchemas).toHaveBeenCalledWith(
+        createEnvSchema([rootVar]),
+        createEnvSchema([appVar])
+      )
       expect(result).toEqual([rootVar, appVar])
     })
 
     it('should pass plugin sources to parseEnvExample', () => {
       const pluginSource = {
-        name: 'test-plugin',
-        patterns: [/test/],
+        directiveType: 'test-plugin',
+        pattern: /test/,
         resolve: vi.fn(),
       }
 
@@ -313,7 +321,7 @@ describe('reconciler', () => {
 
   describe('reconcileApp', () => {
     it('should return empty updates when no missing variables', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue([])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -340,7 +348,7 @@ describe('reconciler', () => {
     it('should resolve missing variables', async () => {
       const missingVar = createVarDef('MISSING_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([missingVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([missingVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([missingVar])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -375,7 +383,7 @@ describe('reconciler', () => {
     it('should skip variables when resolver indicates skipped', async () => {
       const missingVar = createVarDef('MISSING_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([missingVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([missingVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([missingVar])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -401,7 +409,7 @@ describe('reconciler', () => {
     it('should collect warnings from resolver', async () => {
       const missingVar = createVarDef('MISSING_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([missingVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([missingVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([missingVar])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -428,7 +436,7 @@ describe('reconciler', () => {
     it('should detect overrides when shared values differ', async () => {
       const sharedVar = createVarDef('SHARED_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([sharedVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([sharedVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([sharedVar])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['SHARED_VAR', 'app-value']]),
@@ -487,7 +495,7 @@ describe('reconciler', () => {
       const app1 = createAppInfo('app1')
       const app2 = createAppInfo('app2')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -515,7 +523,7 @@ describe('reconciler', () => {
       const app = createAppInfo()
       const missingVar = createVarDef('MISSING_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([missingVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([missingVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([missingVar])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -545,7 +553,7 @@ describe('reconciler', () => {
       const app = createAppInfo()
       const missingVar = createVarDef('MISSING_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([missingVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([missingVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([missingVar])
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -575,7 +583,7 @@ describe('reconciler', () => {
       const app2 = createAppInfo('app2')
       const missingVar = createVarDef('MISSING_VAR')
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue([missingVar])
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([missingVar]))
       vi.mocked(parser.mergeSchemas).mockReturnValue([missingVar])
       // Use mockImplementation to return a fresh Map for each call
       // (mockReturnValue would share the same Map instance, causing

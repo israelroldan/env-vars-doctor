@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { runDiagnose } from '@/commands/diagnose.js'
-import type { AppInfo, EnvVarDefinition, ScanResult, DiagnosisResult } from '@/core/types.js'
+import type { AppInfo, EnvVarDefinition } from '@/core/types.js'
+import type { SourceScanResult, DiagnoseResult } from '@/core/source-scanner.js'
 
 // Mock all dependencies
 vi.mock('@/core/scanner.js')
@@ -25,22 +26,26 @@ function createAppInfo(name: string): AppInfo {
   }
 }
 
-function createScanResult(overrides: Partial<ScanResult> = {}): ScanResult {
+function createScanResult(overrides: Partial<SourceScanResult> = {}): SourceScanResult {
   return {
     usedVars: new Map(),
     filesScanned: 10,
-    patterns: [],
+    linesScanned: 100,
     ...overrides,
   }
 }
 
-function createDiagnosisResult(overrides: Partial<DiagnosisResult> = {}): DiagnosisResult {
+function createDiagnoseResult(overrides: Partial<DiagnoseResult> = {}): DiagnoseResult {
   return {
     missing: new Map(),
     unused: new Set(),
     defined: new Set(),
     ...overrides,
   }
+}
+
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/project/.env.example') {
+  return { filePath, variables }
 }
 
 describe('diagnose command', () => {
@@ -55,11 +60,11 @@ describe('diagnose command', () => {
       examplePath: '/project/.env.example',
       localPath: '/project/.env.local',
     })
-    vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+    vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
     vi.mocked(sourceScanner.scanAppSources).mockReturnValue(createScanResult())
     vi.mocked(sourceScanner.scanPackageSources).mockReturnValue(createScanResult())
     vi.mocked(sourceScanner.mergeScanResults).mockReturnValue(createScanResult())
-    vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnosisResult())
+    vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnoseResult())
   })
 
   afterEach(() => {
@@ -172,7 +177,7 @@ describe('diagnose command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           missing: new Map([['UNDOCUMENTED', [{ file: 'src/index.ts', line: 10, pattern: 'process.env.UNDOCUMENTED' }]]]),
         })
       )
@@ -193,7 +198,7 @@ describe('diagnose command', () => {
     it('should report no missing when all documented', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
-      vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnosisResult())
+      vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnoseResult())
 
       await runDiagnose({
         app: 'web',
@@ -210,7 +215,7 @@ describe('diagnose command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           unused: new Set(['UNUSED_VAR']),
         })
       )
@@ -227,7 +232,7 @@ describe('diagnose command', () => {
     it('should report no unused when all used', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
-      vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnosisResult())
+      vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnoseResult())
 
       await runDiagnose({
         app: 'web',
@@ -248,7 +253,7 @@ describe('diagnose command', () => {
       ]
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           missing: new Map([['VAR', usages]]),
         })
       )
@@ -274,7 +279,7 @@ describe('diagnose command', () => {
       ]
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           missing: new Map([['VAR', usages]]),
         })
       )
@@ -296,7 +301,7 @@ describe('diagnose command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           missing: new Map([['VAR', []]]),
         })
       )
@@ -313,7 +318,7 @@ describe('diagnose command', () => {
     it('should return 0 when no missing variables', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
-      vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnosisResult())
+      vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(createDiagnoseResult())
 
       const result = await runDiagnose({
         app: 'web',
@@ -343,7 +348,7 @@ describe('diagnose command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           missing: new Map([['M1', []]]),
           unused: new Set(['U1', 'U2']),
           defined: new Set(['D1', 'D2', 'D3']),
@@ -363,7 +368,7 @@ describe('diagnose command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
       vi.mocked(sourceScanner.diagnoseEnvUsage).mockReturnValue(
-        createDiagnosisResult({
+        createDiagnoseResult({
           missing: new Map([['M1', []]]),
         })
       )

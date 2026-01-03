@@ -40,6 +40,10 @@ function createVarDef(
   }
 }
 
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/project/.env.example') {
+  return { filePath, variables }
+}
+
 function createDefaultConfig() {
   return {
     version: '1' as const,
@@ -76,7 +80,7 @@ describe('ci command', () => {
       examplePath: '/project/.env.example',
       localPath: '/project/.env.local',
     })
-    vi.mocked(parser.parseEnvExample).mockReturnValue([])
+    vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
     vi.mocked(parser.mergeSchemas).mockReturnValue([])
   })
 

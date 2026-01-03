@@ -24,14 +24,38 @@ function createAppInfo(name: string): AppInfo {
   }
 }
 
+function createDefaultConfig() {
+  return {
+    version: '1' as const,
+    project: {
+      rootEnvExample: '.env.example',
+      rootEnvLocal: '.env.local',
+      workspaces: { detection: 'auto' as const, patterns: [], sourceDir: 'src' },
+    },
+    scanning: {
+      extensions: ['.ts'],
+      skipDirs: ['node_modules'],
+      ignoreMissing: [],
+      ignoreUnused: [],
+    },
+    ci: {
+      skipEnvVar: 'SKIP_ENV_DOCTOR',
+      skipDirectives: ['local-only', 'prompt'],
+      detection: {},
+    },
+    plugins: {},
+  }
+}
+
 function createContext(overrides: Partial<ResolverContext> = {}): ResolverContext {
   return {
-    existingValues: new Map(),
-    allDefinitions: [],
+    app: createAppInfo('test'),
+    currentValues: new Map(),
     interactive: true,
+    config: createDefaultConfig(),
     rootDir: '/project',
     ...overrides,
-  }
+  } as ResolverContext
 }
 
 function createFetchResponse(data: unknown, ok = true, status = 200) {
@@ -155,7 +179,7 @@ describe('vercel plugin', () => {
         const plugin = createVercelPlugin()
         const provider = plugin.deploymentProviders![0]
 
-        expect(provider.isAvailable!()).toBe(true)
+        expect(provider.isAvailable!(createContext())).toBe(true)
       })
 
       it('should return false when no token', () => {
@@ -164,7 +188,7 @@ describe('vercel plugin', () => {
         const plugin = createVercelPlugin()
         const provider = plugin.deploymentProviders![0]
 
-        expect(provider.isAvailable!()).toBe(false)
+        expect(provider.isAvailable!(createContext())).toBe(false)
       })
 
       it('should have unavailable message', () => {

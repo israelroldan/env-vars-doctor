@@ -28,14 +28,47 @@ function createVarDef(name: string, exampleValue = ''): EnvVarDefinition {
   }
 }
 
+function createDefaultConfig() {
+  return {
+    version: '1' as const,
+    project: {
+      rootEnvExample: '.env.example',
+      rootEnvLocal: '.env.local',
+      workspaces: { detection: 'auto' as const, patterns: [], sourceDir: 'src' },
+    },
+    scanning: {
+      extensions: ['.ts'],
+      skipDirs: ['node_modules'],
+      ignoreMissing: [],
+      ignoreUnused: [],
+    },
+    ci: {
+      skipEnvVar: 'SKIP_ENV_DOCTOR',
+      skipDirectives: ['local-only', 'prompt'],
+      detection: {},
+    },
+    plugins: {},
+  }
+}
+
+function createAppInfo(name: string) {
+  return {
+    name,
+    path: `/apps/${name}`,
+    envExamplePath: `/apps/${name}/.env.example`,
+    envLocalPath: `/apps/${name}/.env.local`,
+  }
+}
+
 function createContext(overrides: Partial<ResolverContext> = {}): ResolverContext {
   return {
-    existingValues: new Map(),
-    allDefinitions: [],
+    app: createAppInfo('test'),
+    currentValues: new Map(),
     interactive: true,
+    config: createDefaultConfig(),
     rootDir: '/project',
     ...overrides,
-  }
+  } as ResolverContext
 }
 
 function createSupabaseStatus(overrides: Record<string, string> = {}) {
@@ -204,7 +237,7 @@ describe('supabase plugin', () => {
       const plugin = createSupabasePlugin()
       const source = plugin.sources![0]
 
-      expect(source.isAvailable!()).toBe(true)
+      expect(source.isAvailable!(createContext())).toBe(true)
     })
 
     it('should return false when CLI is not installed', () => {
@@ -215,7 +248,7 @@ describe('supabase plugin', () => {
       const plugin = createSupabasePlugin()
       const source = plugin.sources![0]
 
-      expect(source.isAvailable!()).toBe(false)
+      expect(source.isAvailable!(createContext())).toBe(false)
     })
 
     it('should have unavailable message', () => {

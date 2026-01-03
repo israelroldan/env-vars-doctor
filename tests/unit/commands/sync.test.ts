@@ -44,6 +44,10 @@ function createVarDef(
   }
 }
 
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/project/.env.example') {
+  return { filePath, variables }
+}
+
 function createReconciliationResult(
   app: AppInfo,
   overrides: Partial<ReconciliationResult> = {}
@@ -96,7 +100,7 @@ describe('sync command', () => {
       examplePath: '/project/.env.example',
       localPath: '/project/.env.local',
     })
-    vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+    vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
     vi.mocked(parser.parseEnvLocal).mockReturnValue({
       values: new Map(),
       comments: new Map(),
@@ -107,7 +111,7 @@ describe('sync command', () => {
     vi.mocked(reconciler.compareSchemaToActual).mockReturnValue(
       createReconciliationResult(createAppInfo('test'))
     )
-    vi.mocked(sources.resolveValue).mockResolvedValue({ value: 'resolved' })
+    vi.mocked(sources.resolveValue).mockResolvedValue({ value: 'resolved', source: 'test' })
   })
 
   afterEach(() => {
@@ -193,8 +197,8 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [sharedVar] }) // root schema
-        .mockReturnValue({ variables: [] }) // app schema
+        .mockReturnValueOnce(createEnvSchema([sharedVar])) // root schema
+        .mockReturnValue(createEnvSchema()) // app schema
 
       await runSync({
         all: true,
@@ -211,8 +215,8 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [sharedVar] })
-        .mockReturnValue({ variables: [] })
+        .mockReturnValueOnce(createEnvSchema([sharedVar]))
+        .mockReturnValue(createEnvSchema())
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['SHARED_VAR', 'existing_value']]),
         comments: new Map(),
@@ -236,8 +240,8 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [sharedVar] })
-        .mockReturnValue({ variables: [] })
+        .mockReturnValueOnce(createEnvSchema([sharedVar]))
+        .mockReturnValue(createEnvSchema())
 
       await runSync({
         all: true,
@@ -255,9 +259,9 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [sharedVar] })
-        .mockReturnValue({ variables: [] })
-      vi.mocked(sources.resolveValue).mockResolvedValue({ value: '', skipped: true })
+        .mockReturnValueOnce(createEnvSchema([sharedVar]))
+        .mockReturnValue(createEnvSchema())
+      vi.mocked(sources.resolveValue).mockResolvedValue({ value: '', skipped: true, source: 'test' })
 
       await runSync({
         all: true,
@@ -274,9 +278,9 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [optionalVar] })
-        .mockReturnValue({ variables: [] })
-      vi.mocked(sources.resolveValue).mockResolvedValue({ value: '', skipped: true })
+        .mockReturnValueOnce(createEnvSchema([optionalVar]))
+        .mockReturnValue(createEnvSchema())
+      vi.mocked(sources.resolveValue).mockResolvedValue({ value: '', skipped: true, source: 'test' })
 
       await runSync({
         all: true,
@@ -295,8 +299,8 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] }) // root
-        .mockReturnValueOnce({ variables: [appVar] }) // app
+        .mockReturnValueOnce(createEnvSchema()) // root
+        .mockReturnValueOnce(createEnvSchema([appVar])) // app
 
       await runSync({
         all: true,
@@ -313,8 +317,8 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] })
-        .mockReturnValueOnce({ variables: [appVar] })
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([appVar]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['APP_VAR', 'value']]),
         comments: new Map(),
@@ -336,9 +340,9 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] })
-        .mockReturnValueOnce({ variables: [appVar] })
-      vi.mocked(sources.resolveValue).mockResolvedValue({ value: 'new_value' })
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([appVar]))
+      vi.mocked(sources.resolveValue).mockResolvedValue({ value: 'new_value', source: 'test' })
 
       await runSync({
         all: true,
@@ -385,11 +389,12 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [sharedVar] })
-        .mockReturnValue({ variables: [] })
+        .mockReturnValueOnce(createEnvSchema([sharedVar]))
+        .mockReturnValue(createEnvSchema())
       vi.mocked(sources.resolveValue).mockResolvedValue({
         value: 'value',
         warning: 'This is a warning',
+        source: 'test',
       })
 
       await runSync({
@@ -404,7 +409,7 @@ describe('sync command', () => {
     it('should warn when no root schema', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
 
       await runSync({
         all: true,
@@ -461,7 +466,7 @@ describe('sync command', () => {
     it('should report overridden shared variables', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
       vi.mocked(reconciler.compareSchemaToActual).mockReturnValue(
         createReconciliationResult(app, {
           overrides: new Map([['SHARED_VAR', 'override_value']]),
@@ -485,8 +490,8 @@ describe('sync command', () => {
 
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [sharedVar] })
-        .mockReturnValue({ variables: [] })
+        .mockReturnValueOnce(createEnvSchema([sharedVar]))
+        .mockReturnValue(createEnvSchema())
 
       await runSync({
         all: true,

@@ -37,6 +37,10 @@ function createVarDef(
   }
 }
 
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/project/.env.example') {
+  return { filePath, variables }
+}
+
 function createDefaultConfig() {
   return {
     version: '1' as const,
@@ -73,7 +77,7 @@ describe('postinstall command', () => {
       localPath: '/project/.env.local',
     })
     vi.mocked(scanner.scanWorkspaces).mockResolvedValue([])
-    vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+    vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
     vi.mocked(parser.parseEnvLocal).mockReturnValue({
       values: new Map(),
       comments: new Map(),
@@ -117,9 +121,7 @@ describe('postinstall command', () => {
   describe('local mode', () => {
     it('should always return 0 locally', async () => {
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([createAppInfo('web')])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING', 'required')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING', 'required')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
         comments: new Map(),
@@ -137,9 +139,7 @@ describe('postinstall command', () => {
 
     it('should print box when all ready', async () => {
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([createAppInfo('web')])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('VAR1')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('VAR1')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['VAR1', 'value']]),
         comments: new Map(),
@@ -151,16 +151,14 @@ describe('postinstall command', () => {
         config: createDefaultConfig(),
       })
 
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('Environment ready')
     })
 
     it('should report missing required variables', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING', 'required')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING', 'required')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
         comments: new Map(),
@@ -172,7 +170,7 @@ describe('postinstall command', () => {
         config: createDefaultConfig(),
       })
 
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('required')
       expect(output).toContain('missing')
     })
@@ -180,9 +178,7 @@ describe('postinstall command', () => {
     it('should report missing optional variables', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('OPT', 'optional')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('OPT', 'optional')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
         comments: new Map(),
@@ -194,7 +190,7 @@ describe('postinstall command', () => {
         config: createDefaultConfig(),
       })
 
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('optional')
       expect(output).toContain('missing')
     })
@@ -202,9 +198,7 @@ describe('postinstall command', () => {
     it('should count unique missing variables', async () => {
       const apps = [createAppInfo('web'), createAppInfo('api')]
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue(apps)
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED', 'required')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED', 'required')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
         comments: new Map(),
@@ -216,7 +210,7 @@ describe('postinstall command', () => {
         config: createDefaultConfig(),
       })
 
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       // SHARED is missing from both apps but should only be counted once
       expect(output).toContain('1 required variable')
     })
@@ -225,8 +219,8 @@ describe('postinstall command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] }) // root schema
-        .mockReturnValueOnce({ variables: [createVarDef('APP_VAR')] }) // app schema
+        .mockReturnValueOnce(createEnvSchema()) // root schema
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')])) // app schema
 
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map(),
@@ -239,16 +233,16 @@ describe('postinstall command', () => {
         config: createDefaultConfig(),
       })
 
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('missing')
     })
 
     it('should treat empty string as missing', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('VAR1', 'required')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(
+        createEnvSchema([createVarDef('VAR1', 'required')])
+      )
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['VAR1', '']]),
         comments: new Map(),
@@ -260,7 +254,7 @@ describe('postinstall command', () => {
         config: createDefaultConfig(),
       })
 
-      const output = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n')
+      const output = consoleLogSpy.mock.calls.map((c: unknown[]) => c[0]).join('\n')
       expect(output).toContain('required')
       expect(output).toContain('missing')
     })

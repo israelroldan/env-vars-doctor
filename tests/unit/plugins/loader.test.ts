@@ -237,8 +237,7 @@ describe('loader', () => {
           deploymentProviders: [
             {
               name: 'custom-deploy',
-              description: 'Custom deployment',
-              targets: [],
+              getTargets: vi.fn().mockResolvedValue([]),
               deploy: vi.fn(),
             },
           ],

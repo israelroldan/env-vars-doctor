@@ -39,6 +39,10 @@ function createVarDef(
   }
 }
 
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/project/.env.example') {
+  return { filePath, variables }
+}
+
 describe('export command', () => {
   let consoleLogSpy: ReturnType<typeof vi.spyOn>
 
@@ -51,7 +55,7 @@ describe('export command', () => {
       examplePath: '/project/.env.example',
       localPath: '/project/.env.local',
     })
-    vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+    vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
     vi.mocked(parser.parseEnvLocal).mockReturnValue({
       values: new Map(),
       comments: new Map(),
@@ -123,9 +127,9 @@ describe('export command', () => {
     it('should separate app-specific and shared variables', async () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.findWorkspace).mockResolvedValue(app)
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(
+        createEnvSchema([createVarDef('SHARED_VAR')])
+      )
       vi.mocked(reconciler.getAppSchema).mockReturnValue([
         createVarDef('SHARED_VAR'),
         createVarDef('APP_VAR'),

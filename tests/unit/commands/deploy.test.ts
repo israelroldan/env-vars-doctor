@@ -48,6 +48,10 @@ function createVarDef(name: string): EnvVarDefinition {
   }
 }
 
+function createEnvSchema(variables: EnvVarDefinition[] = [], filePath = '/project/.env.example') {
+  return { filePath, variables }
+}
+
 function createDefaultConfig() {
   return {
     version: '1' as const,
@@ -97,7 +101,7 @@ describe('deploy command', () => {
       examplePath: '/project/.env.example',
       localPath: '/project/.env.local',
     })
-    vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+    vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
     vi.mocked(parser.parseEnvLocal).mockReturnValue({
       values: new Map(),
       comments: new Map(),
@@ -148,9 +152,7 @@ describe('deploy command', () => {
 
   describe('shared env vars check', () => {
     it('should report all shared vars configured correctly', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
       mockFetch.mockResolvedValue(
         createFetchResponse({
           data: [
@@ -175,9 +177,7 @@ describe('deploy command', () => {
     })
 
     it('should detect missing shared vars', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING_VAR')]))
       vi.mocked(fs.existsSync).mockReturnValue(true)
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['MISSING_VAR', 'local-value']]),
@@ -198,9 +198,7 @@ describe('deploy command', () => {
     })
 
     it('should detect missing production target', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
       mockFetch.mockResolvedValue(
         createFetchResponse({
           data: [
@@ -225,9 +223,7 @@ describe('deploy command', () => {
     })
 
     it('should detect missing non-production target', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
       mockFetch.mockResolvedValue(
         createFetchResponse({
           data: [
@@ -252,9 +248,7 @@ describe('deploy command', () => {
     })
 
     it('should handle allCustomEnvs as non-production target', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
       mockFetch.mockResolvedValue(
         createFetchResponse({
           data: [
@@ -282,9 +276,7 @@ describe('deploy command', () => {
 
   describe('API errors', () => {
     it('should handle fetch team shared vars failure', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('VAR1')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('VAR1')]))
       mockFetch.mockResolvedValue(createFetchResponse({}, false, 401))
 
       const result = await runDeploy({
@@ -299,9 +291,9 @@ describe('deploy command', () => {
     })
 
     it('should handle pagination in team shared vars', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('VAR1'), createVarDef('VAR2')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(
+        createEnvSchema([createVarDef('VAR1'), createVarDef('VAR2')])
+      )
       mockFetch
         .mockResolvedValueOnce(
           createFetchResponse({
@@ -353,7 +345,7 @@ describe('deploy command', () => {
 
       const apps = [createAppInfo('web'), createAppInfo('api')]
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue(apps)
-      vi.mocked(parser.parseEnvExample).mockReturnValue({ variables: [] })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema())
 
       mockFetch.mockResolvedValue(createFetchResponse({ data: [] }))
 
@@ -380,8 +372,8 @@ describe('deploy command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] }) // root schema
-        .mockReturnValueOnce({ variables: [createVarDef('APP_VAR')] }) // app schema
+        .mockReturnValueOnce(createEnvSchema()) // root schema
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')])) // app schema
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['APP_VAR', 'value']]),
         comments: new Map(),
@@ -419,8 +411,8 @@ describe('deploy command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] })
-        .mockReturnValueOnce({ variables: [createVarDef('MISSING_APP_VAR')] })
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([createVarDef('MISSING_APP_VAR')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['MISSING_APP_VAR', 'local-value']]),
         comments: new Map(),
@@ -450,8 +442,8 @@ describe('deploy command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] })
-        .mockReturnValueOnce({ variables: [createVarDef('APP_VAR')] })
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')]))
 
       mockFetch
         .mockResolvedValueOnce(createFetchResponse({ data: [] }))
@@ -477,9 +469,7 @@ describe('deploy command', () => {
       })
       vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING_VAR')]))
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([])
       mockFetch.mockResolvedValue(createFetchResponse({ data: [] }))
 
@@ -506,9 +496,7 @@ describe('deploy command', () => {
       })
       vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING_VAR')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['MISSING_VAR', 'value']]),
         comments: new Map(),
@@ -539,9 +527,7 @@ describe('deploy command', () => {
       })
       vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING_VAR')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['MISSING_VAR', 'value']]),
         comments: new Map(),
@@ -573,9 +559,7 @@ describe('deploy command', () => {
       })
       vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING_VAR')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['MISSING_VAR', 'value']]),
         comments: new Map(),
@@ -613,9 +597,7 @@ describe('deploy command', () => {
       })
       vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
 
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('MISSING_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('MISSING_VAR')]))
       vi.mocked(parser.parseEnvLocal).mockReturnValue({
         values: new Map([['MISSING_VAR', 'value']]),
         comments: new Map(),
@@ -641,9 +623,7 @@ describe('deploy command', () => {
 
   describe('target handling', () => {
     it('should handle target as string instead of array', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
       mockFetch.mockResolvedValue(
         createFetchResponse({
           data: [
@@ -666,9 +646,7 @@ describe('deploy command', () => {
     })
 
     it('should merge targets from duplicate keys', async () => {
-      vi.mocked(parser.parseEnvExample).mockReturnValue({
-        variables: [createVarDef('SHARED_VAR')],
-      })
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
       mockFetch.mockResolvedValue(
         createFetchResponse({
           data: [
@@ -698,8 +676,8 @@ describe('deploy command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] })
-        .mockReturnValueOnce({ variables: [createVarDef('APP_VAR')] })
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')]))
 
       mockFetch
         .mockResolvedValueOnce(createFetchResponse({ data: [] }))
@@ -727,8 +705,8 @@ describe('deploy command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] })
-        .mockReturnValueOnce({ variables: [createVarDef('APP_VAR')] })
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')]))
 
       mockFetch
         .mockResolvedValueOnce(createFetchResponse({ data: [] }))
@@ -783,8 +761,8 @@ describe('deploy command', () => {
       const app = createAppInfo('web')
       vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
       vi.mocked(parser.parseEnvExample)
-        .mockReturnValueOnce({ variables: [] }) // root
-        .mockReturnValueOnce({ variables: [createVarDef('APP_VAR')] }) // app
+        .mockReturnValueOnce(createEnvSchema()) // root
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')])) // app
 
       mockFetch
         .mockResolvedValueOnce(createFetchResponse({ data: [] })) // team vars
