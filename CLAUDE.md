@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Workflow
+
+**IMPORTANT:** Never commit directly to `main`. Before starting any work:
+
+1. Ensure you're on a clean feature branch (not `main`)
+2. If on `main`, create a new branch first: `git checkout -b <feature-branch>`
+3. All changes should go through pull requests
+
 ## Build & Development Commands
 
 ```bash
