@@ -18,7 +18,7 @@
 
 ## Larger Improvements
 
-- [ ] Add unit tests (vitest)
+- [x] Add unit tests (vitest)
 - [ ] Switch to a CLI framework (e.g., `citty`, `cleye`) for better subcommand help and validation
 - [ ] Add `init` command to scaffold config files
 - [ ] Subcommand-specific help (e.g., `env-vars-doctor sync --help`)
