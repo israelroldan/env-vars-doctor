@@ -20,7 +20,7 @@ interface CiOptions {
   all?: boolean
   verbose?: boolean
   rootDir: string
-  config: EnvDoctorConfig
+  config: Required<EnvDoctorConfig>
 }
 
 /**

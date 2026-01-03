@@ -45,7 +45,7 @@ interface SyncOptions {
   verbose?: boolean
   force?: boolean
   rootDir: string
-  config: EnvDoctorConfig
+  config: Required<EnvDoctorConfig>
 }
 
 /**
@@ -110,7 +110,7 @@ async function resolveSharedVariables(
     interactive: boolean
     verbose?: boolean
     rootDir: string
-    config: EnvDoctorConfig
+    config: Required<EnvDoctorConfig>
   }
 ): Promise<{
   resolvedShared: Map<string, string>
