@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/israelroldan/env-vars-doctor/compare/v1.2.0...v1.3.0) (2026-01-03)
+
+
+### Features
+
+* integrate Vitest for testing and add initial test cases for 90%+ coverage ([#10](https://github.com/israelroldan/env-vars-doctor/issues/10)) ([684315d](https://github.com/israelroldan/env-vars-doctor/commit/684315db0ce2504d891b6198c736ae78f902d072))
+
 ## [1.2.0](https://github.com/israelroldan/env-vars-doctor/compare/v1.1.1...v1.2.0) (2026-01-03)
 
 
