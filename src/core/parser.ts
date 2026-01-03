@@ -7,7 +7,6 @@ import type {
   EnvSchema,
   EnvVarDefinition,
   Directive,
-  DirectiveType,
   RequirementLevel,
   EnvLocalValues,
   ValueSourceProvider,
@@ -27,7 +26,7 @@ const BUILT_IN_DIRECTIVE_PATTERNS = {
   computed: /\[computed:(\w+)\]/i,
   copy: /\[copy:([A-Z_][A-Z0-9_]*)\]/i,
   default: /\[default:([^\]]+)\]/i,
-  boolean: /\[boolean(?::([^\/\]]+)\/([^\]]+))?\]/i,
+  boolean: /\[boolean(?::([^/\]]+)\/([^\]]+))?\]/i,
   localOnly: /\[local-only\]/i,
 }
 

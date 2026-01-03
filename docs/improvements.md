@@ -13,8 +13,8 @@
 ## Quick Wins
 
 - [x] Add CI workflow for PRs (run `type-check` and `build` on pull requests)
-- [ ] Add `homepage` and `bugs` fields to package.json
-- [ ] Add ESLint config (currently `pnpm lint` fails - no eslint installed)
+- [x] Add `homepage` and `bugs` fields to package.json
+- [x] Add ESLint config (currently `pnpm lint` fails - no eslint installed)
 
 ## Larger Improvements
 

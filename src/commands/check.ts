@@ -5,7 +5,6 @@
 import type { EnvDoctorConfig, AppInfo } from '../core/types.js'
 import {
   scanWorkspaces,
-  getRootEnvPaths,
   hasEnvExample,
   detectCurrentWorkspace,
   findWorkspace,

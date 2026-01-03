@@ -12,7 +12,7 @@ import {
 } from '../core/scanner.js'
 import { parseEnvExample, mergeSchemas } from '../core/parser.js'
 import { getValueSources } from '../plugins/registry.js'
-import { shouldSkip, isCI } from '../core/config.js'
+import { shouldSkip } from '../core/config.js'
 import * as reporter from '../core/reporter.js'
 
 interface CiOptions {
@@ -27,7 +27,7 @@ interface CiOptions {
  * Run the CI command
  */
 export async function runCi(options: CiOptions): Promise<number> {
-  const { app, all, verbose, rootDir, config } = options
+  const { app, all, rootDir, config } = options
 
   // Check if we should skip
   if (shouldSkip(config)) {

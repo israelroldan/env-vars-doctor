@@ -2,7 +2,7 @@
  * Terminal output formatting for env-vars-doctor
  */
 
-import type { ReconciliationResult, ReporterOptions } from './types.js'
+import type { ReconciliationResult } from './types.js'
 
 // =============================================================================
 // ANSI Colors

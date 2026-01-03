@@ -3,7 +3,7 @@
  */
 
 import type { EnvDoctorPlugin, EnvDoctorConfig } from '../core/types.js'
-import { registerPlugin, registerPlugins, clearRegistry, getValueSources } from './registry.js'
+import { registerPlugin, clearRegistry, getValueSources } from './registry.js'
 import { registerPluginSources } from '../sources/index.js'
 
 // Import bundled plugins
@@ -66,29 +66,24 @@ async function loadExternalPlugin(
   name: string,
   options?: Record<string, unknown>
 ): Promise<EnvDoctorPlugin | null> {
-  try {
-    // Try to dynamically import the plugin
-    const module = await import(name)
+  // Try to dynamically import the plugin
+  const module = await import(name)
 
-    // Check for factory function or default export
-    if (typeof module.createPlugin === 'function') {
-      return module.createPlugin(options)
-    }
-
-    if (typeof module.default === 'function') {
-      return module.default(options)
-    }
-
-    if (module.default && typeof module.default === 'object' && 'meta' in module.default) {
-      return module.default as EnvDoctorPlugin
-    }
-
-    console.warn(`Plugin "${name}" does not export a valid plugin`)
-    return null
-  } catch (error) {
-    // Plugin not found or failed to load
-    throw error
+  // Check for factory function or default export
+  if (typeof module.createPlugin === 'function') {
+    return module.createPlugin(options)
   }
+
+  if (typeof module.default === 'function') {
+    return module.default(options)
+  }
+
+  if (module.default && typeof module.default === 'object' && 'meta' in module.default) {
+    return module.default as EnvDoctorPlugin
+  }
+
+  console.warn(`Plugin "${name}" does not export a valid plugin`)
+  return null
 }
 
 /**
