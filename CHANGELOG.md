@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/israelroldan/env-vars-doctor/compare/v1.1.1...v1.2.0) (2026-01-03)
+
+
+### Features
+
+* add CI workflow for pull requests ([0e7a0b6](https://github.com/israelroldan/env-vars-doctor/commit/0e7a0b67d29597be5841b517f4f3a8fbcfd21130))
+* add CI workflow for pull requests ([2a9c798](https://github.com/israelroldan/env-vars-doctor/commit/2a9c798c3076fdbb4ae67a032a0c229fa11aef11))
+
 ## [1.1.1](https://github.com/israelroldan/env-vars-doctor/compare/v1.1.0...v1.1.1) (2026-01-02)
 
 
