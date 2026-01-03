@@ -10,7 +10,7 @@
 
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import type { AppInfo, EnvDoctorConfig, ScanningConfig } from './types.js'
+import type { AppInfo, EnvDoctorConfig } from './types.js'
 import { getPluginIgnoreMissing } from '../plugins/registry.js'
 
 // =============================================================================

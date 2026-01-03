@@ -29,7 +29,6 @@ import {
   updateEnvLocalContent,
 } from '../core/parser.js'
 import {
-  reconcileApp,
   applyUpdates,
   getAppSchema,
   compareSchemaToActual,

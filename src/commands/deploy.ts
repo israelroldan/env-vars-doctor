@@ -12,10 +12,9 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as readline from 'node:readline'
-import type { EnvDoctorConfig, AppInfo } from '../core/types.js'
-import { scanWorkspaces, getRootEnvPaths, hasEnvExample, findWorkspace } from '../core/scanner.js'
+import type { EnvDoctorConfig } from '../core/types.js'
+import { scanWorkspaces, getRootEnvPaths, hasEnvExample } from '../core/scanner.js'
 import { parseEnvLocal, parseEnvExample } from '../core/parser.js'
-import { getDeploymentProviders } from '../plugins/registry.js'
 import * as reporter from '../core/reporter.js'
 
 interface DeployOptions {
@@ -353,7 +352,7 @@ function parseProjectMappingFromWorkflow(workflowPath: string): Map<string, stri
  * Run the deploy command
  */
 export async function runDeploy(options: DeployOptions): Promise<number> {
-  const { app, all, verbose, dryRun, rootDir, config } = options
+  const { dryRun, rootDir, config } = options
 
   const token = process.env.VERCEL_TOKEN
   const teamId = process.env.VERCEL_TEAM_ID
