@@ -1,11 +1,11 @@
 # env-vars-doctor
 
-Environment variable management for monorepos - sync, validate, and diagnose `.env` files across workspaces.
+Environment variable management for projects and monorepos - sync, validate, and diagnose `.env` files.
 
 ## Features
 
 - **Schema-based validation** - Define environment variables with directives in `.env.local.example` files
-- **Monorepo-aware** - Automatically discovers workspaces and syncs variables
+- **Works everywhere** - Supports both single projects and monorepos with multiple workspaces
 - **Interactive prompts** - Guided setup for missing values
 - **Source code scanning** - Detect undocumented `process.env` usage
 - **CI integration** - Validate environment completeness in pipelines

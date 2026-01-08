@@ -12,12 +12,49 @@ import type { AppInfo, EnvDoctorConfig, WorkspaceDetection } from './types.js'
 // =============================================================================
 
 /**
- * Detect the monorepo root by looking for workspace config files
+ * Check if a directory is configured as a monorepo
+ * Returns true if workspace config files are present (pnpm-workspace.yaml,
+ * package.json with workspaces, or lerna.json)
+ */
+function isMonorepo(rootDir: string): boolean {
+  // Check for pnpm workspace
+  if (fs.existsSync(path.join(rootDir, 'pnpm-workspace.yaml'))) {
+    return true
+  }
+
+  // Check for npm/yarn workspaces in package.json
+  const packageJsonPath = path.join(rootDir, 'package.json')
+  if (fs.existsSync(packageJsonPath)) {
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+      if (packageJson.workspaces) {
+        return true
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  // Check for lerna
+  if (fs.existsSync(path.join(rootDir, 'lerna.json'))) {
+    return true
+  }
+
+  return false
+}
+
+/**
+ * Detect the monorepo root by looking for workspace config files.
+ * For single-projects (no workspace config), returns the nearest ancestor
+ * containing a package.json.
  */
 export function detectMonorepoRoot(startDir?: string): string {
   const originalCwd = startDir || process.cwd()
   let dir = originalCwd
   const { root } = path.parse(dir)
+
+  // Track the first package.json we find (for single-project fallback)
+  let firstPackageJsonDir: string | null = null
 
   // Walk up until filesystem root
   while (true) {
@@ -28,6 +65,10 @@ export function detectMonorepoRoot(startDir?: string): string {
     // Check for npm/yarn workspaces in package.json
     const packageJsonPath = path.join(dir, 'package.json')
     if (fs.existsSync(packageJsonPath)) {
+      // Track first package.json for single-project fallback
+      if (firstPackageJsonDir === null) {
+        firstPackageJsonDir = dir
+      }
       try {
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
         if (packageJson.workspaces) {
@@ -48,6 +89,12 @@ export function detectMonorepoRoot(startDir?: string): string {
     dir = path.dirname(dir)
   }
 
+  // For single-projects, return the nearest ancestor with package.json
+  // This allows running from subdirectories (e.g., src/) to still find the root
+  if (firstPackageJsonDir !== null) {
+    return firstPackageJsonDir
+  }
+
   // Fallback to original cwd
   return originalCwd
 }
@@ -58,6 +105,22 @@ export function detectMonorepoRoot(startDir?: string): string {
 export function getProjectRoot(config: EnvDoctorConfig, startDir?: string): string {
   // Could add explicit root in config later
   return detectMonorepoRoot(startDir)
+}
+
+/**
+ * Create an AppInfo for the root directory (single-project mode)
+ */
+function createRootAppInfo(rootDir: string, config: EnvDoctorConfig): AppInfo {
+  const envExampleName = config.project?.rootEnvExample || '.env.local.example'
+  const envLocalName = config.project?.rootEnvLocal || '.env.local'
+  const name = path.basename(rootDir) || 'root'
+
+  return {
+    name,
+    path: rootDir,
+    envExamplePath: path.join(rootDir, envExampleName),
+    envLocalPath: path.join(rootDir, envLocalName),
+  }
 }
 
 // =============================================================================
@@ -178,6 +241,15 @@ export async function scanWorkspaces(
     }
   }
 
+  // Single-project fallback: if no workspaces found and this is not a monorepo,
+  // treat the root directory as the target app (if it has .env.local.example)
+  if (apps.length === 0 && !isMonorepo(root)) {
+    const rootApp = createRootAppInfo(root, config)
+    if (fs.existsSync(rootApp.envExamplePath)) {
+      return [rootApp]
+    }
+  }
+
   // Sort alphabetically for consistent output
   return apps.sort((a, b) => a.name.localeCompare(b.name))
 }
@@ -229,6 +301,15 @@ export function scanWorkspacesSync(
           envLocalPath: path.join(appPath, envLocalName),
         })
       }
+    }
+  }
+
+  // Single-project fallback: if no workspaces found and this is not a monorepo,
+  // treat the root directory as the target app (if it has .env.local.example)
+  if (apps.length === 0 && !isMonorepo(root)) {
+    const rootApp = createRootAppInfo(root, config)
+    if (fs.existsSync(rootApp.envExamplePath)) {
+      return [rootApp]
     }
   }
 
