@@ -81,12 +81,37 @@ describe('scanner', () => {
       expect(result).toBe('/project')
     })
 
-    it('should fallback to start directory if no workspace config found', () => {
+    it('should fallback to start directory if no workspace config or package.json found', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false)
 
       const result = detectMonorepoRoot('/some/random/dir')
 
       expect(result).toBe('/some/random/dir')
+    })
+
+    it('should return nearest package.json dir for single-project when started from subdirectory', () => {
+      vi.mocked(fs.existsSync).mockImplementation((p) => {
+        const pathStr = String(p)
+        // No workspace configs anywhere
+        if (pathStr.includes('pnpm-workspace.yaml')) return false
+        if (pathStr.includes('lerna.json')) return false
+        // package.json only at /project root, not in subdirectories
+        if (pathStr === '/project/package.json') return true
+        return false
+      })
+      vi.mocked(fs.readFileSync).mockImplementation((p) => {
+        if (String(p) === '/project/package.json') {
+          // No workspaces - single project
+          return JSON.stringify({ name: 'my-project', version: '1.0.0' })
+        }
+        return ''
+      })
+
+      // Start from a subdirectory
+      const result = detectMonorepoRoot('/project/src/components')
+
+      // Should find the project root, not the subdirectory
+      expect(result).toBe('/project')
     })
 
     it('should use cwd if no start directory provided', () => {
@@ -914,6 +939,274 @@ describe('scanner', () => {
 
       expect(result).not.toBeNull()
       expect(result?.name).toBe('web')
+    })
+  })
+
+  describe('single-project support', () => {
+    describe('scanWorkspaces', () => {
+      it('should return root as app when no workspace config and .env.local.example exists', async () => {
+        const config: EnvDoctorConfig = {}
+
+        // No workspace config files exist
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          // No pnpm-workspace.yaml, no workspaces in package.json, no lerna.json
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          // Root has .env.local.example
+          if (pathStr === '/project/.env.local.example') return true
+          // No workspace directories
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            // No workspaces field
+            return JSON.stringify({ name: 'my-project', version: '1.0.0' })
+          }
+          return ''
+        })
+
+        vi.mocked(glob).mockResolvedValue([])
+
+        const result = await scanWorkspaces(config, '/project')
+
+        expect(result).toHaveLength(1)
+        expect(result[0].name).toBe('project')
+        expect(result[0].path).toBe('/project')
+        expect(result[0].envExamplePath).toBe('/project/.env.local.example')
+        expect(result[0].envLocalPath).toBe('/project/.env.local')
+      })
+
+      it('should return empty when no workspace config and no .env.local.example', async () => {
+        const config: EnvDoctorConfig = {}
+
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          // No .env.local.example at root
+          if (pathStr === '/project/.env.local.example') return false
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-project' })
+          }
+          return ''
+        })
+
+        vi.mocked(glob).mockResolvedValue([])
+
+        const result = await scanWorkspaces(config, '/project')
+
+        expect(result).toHaveLength(0)
+      })
+
+      it('should NOT fall back to single-project when monorepo config exists but no workspaces match', async () => {
+        const config: EnvDoctorConfig = {}
+
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          // Has pnpm-workspace.yaml (monorepo config exists)
+          if (pathStr === '/project/pnpm-workspace.yaml') return true
+          if (pathStr === '/project/package.json') return true
+          // Root has .env.local.example
+          if (pathStr === '/project/.env.local.example') return true
+          // But no workspace directories exist
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/pnpm-workspace.yaml') {
+            return 'packages:\n  - "apps/*"\n'
+          }
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-monorepo' })
+          }
+          return ''
+        })
+
+        vi.mocked(glob).mockResolvedValue([])
+
+        const result = await scanWorkspaces(config, '/project')
+
+        // Should NOT return root as app because monorepo config exists
+        expect(result).toHaveLength(0)
+      })
+
+      it('should use custom env file names for single-project', async () => {
+        const config: EnvDoctorConfig = {
+          project: {
+            rootEnvExample: '.env.example',
+            rootEnvLocal: '.env',
+          },
+        }
+
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          if (pathStr === '/project/.env.example') return true
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-project' })
+          }
+          return ''
+        })
+
+        vi.mocked(glob).mockResolvedValue([])
+
+        const result = await scanWorkspaces(config, '/project')
+
+        expect(result).toHaveLength(1)
+        expect(result[0].envExamplePath).toBe('/project/.env.example')
+        expect(result[0].envLocalPath).toBe('/project/.env')
+      })
+    })
+
+    describe('scanWorkspacesSync', () => {
+      it('should return root as app when no workspace config and .env.local.example exists', () => {
+        const config: EnvDoctorConfig = {}
+
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          if (pathStr === '/project/.env.local.example') return true
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-project' })
+          }
+          return ''
+        })
+
+        const result = scanWorkspacesSync(config, '/project')
+
+        expect(result).toHaveLength(1)
+        expect(result[0].name).toBe('project')
+        expect(result[0].path).toBe('/project')
+      })
+
+      it('should return empty when no workspace config and no .env.local.example', () => {
+        const config: EnvDoctorConfig = {}
+
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          if (pathStr === '/project/.env.local.example') return false
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-project' })
+          }
+          return ''
+        })
+
+        const result = scanWorkspacesSync(config, '/project')
+
+        expect(result).toHaveLength(0)
+      })
+    })
+
+    describe('detectCurrentWorkspace', () => {
+      const originalCwd = process.cwd
+
+      beforeEach(() => {
+        process.cwd = vi.fn()
+      })
+
+      afterEach(() => {
+        process.cwd = originalCwd
+      })
+
+      it('should return root app when in single-project root directory', async () => {
+        const config: EnvDoctorConfig = {}
+
+        vi.mocked(process.cwd).mockReturnValue('/project')
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          if (pathStr === '/project/.env.local.example') return true
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-project' })
+          }
+          return ''
+        })
+
+        vi.mocked(glob).mockResolvedValue([])
+
+        const result = await detectCurrentWorkspace(config, '/project')
+
+        expect(result).not.toBeNull()
+        expect(result?.name).toBe('project')
+        expect(result?.path).toBe('/project')
+      })
+
+      it('should return root app when in single-project subdirectory', async () => {
+        const config: EnvDoctorConfig = {}
+
+        vi.mocked(process.cwd).mockReturnValue('/project/src/components')
+        vi.mocked(fs.existsSync).mockImplementation((p) => {
+          const pathStr = String(p)
+          if (pathStr === '/project/pnpm-workspace.yaml') return false
+          if (pathStr === '/project/lerna.json') return false
+          if (pathStr === '/project/package.json') return true
+          if (pathStr === '/project/.env.local.example') return true
+          if (pathStr === '/project/apps') return false
+          if (pathStr === '/project/packages') return false
+          return false
+        })
+
+        vi.mocked(fs.readFileSync).mockImplementation((p) => {
+          if (String(p) === '/project/package.json') {
+            return JSON.stringify({ name: 'my-project' })
+          }
+          return ''
+        })
+
+        vi.mocked(glob).mockResolvedValue([])
+
+        const result = await detectCurrentWorkspace(config, '/project')
+
+        expect(result).not.toBeNull()
+        expect(result?.name).toBe('project')
+      })
     })
   })
 })
