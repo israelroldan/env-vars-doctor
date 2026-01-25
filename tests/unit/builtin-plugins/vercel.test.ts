@@ -64,7 +64,19 @@ function createFetchResponse(data: unknown, ok = true, status = 200) {
     status,
     statusText: ok ? 'OK' : 'Error',
     json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
   })
+}
+
+/**
+ * Extract the parsed request body from a mock fetch call
+ */
+function getRequestBody(callIndex = 0): Record<string, unknown> {
+  const call = mockFetch.mock.calls[callIndex]
+  if (!call || !call[1]?.body) {
+    throw new Error(`No fetch call found at index ${callIndex}`)
+  }
+  return JSON.parse(call[1].body as string)
 }
 
 describe('vercel plugin', () => {
@@ -310,9 +322,7 @@ describe('vercel plugin', () => {
       })
 
       it('should create new env var when it does not exist', async () => {
-        mockFetch
-          .mockResolvedValueOnce(createFetchResponse({ envs: [] })) // getProjectEnvVars
-          .mockResolvedValueOnce(createFetchResponse({ id: 'new-id' })) // POST create
+        mockFetch.mockResolvedValueOnce(createFetchResponse({ created: [{ id: 'new-id' }] }))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -327,20 +337,26 @@ describe('vercel plugin', () => {
         expect(result.success).toBe(true)
         expect(result.message).toContain('Deployed 1 variables')
         expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.vercel.com/v10/projects/prj_abc123/env',
+          'https://api.vercel.com/v10/projects/prj_abc123/env?upsert=true',
           expect.objectContaining({
             method: 'POST',
-            body: expect.stringContaining('VAR1'),
           })
         )
+
+        // Validate exact request body schema for project-level env vars
+        const body = getRequestBody()
+        expect(body).toEqual({
+          key: 'VAR1',
+          value: 'value1',
+          target: ['production'],
+          type: 'encrypted',
+        })
+        // Ensure we're NOT using the evs wrapper (that's for team-level only)
+        expect(body).not.toHaveProperty('evs')
       })
 
-      it('should update existing env var', async () => {
-        mockFetch
-          .mockResolvedValueOnce(
-            createFetchResponse({ envs: [{ key: 'VAR1', value: 'old', target: ['production'] }] })
-          )
-          .mockResolvedValueOnce(createFetchResponse({ id: 'updated' })) // PATCH update
+      it('should update existing env var via upsert', async () => {
+        mockFetch.mockResolvedValueOnce(createFetchResponse({ created: [{ id: 'updated' }] }))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -354,17 +370,24 @@ describe('vercel plugin', () => {
 
         expect(result.success).toBe(true)
         expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.vercel.com/v9/projects/prj_abc123/env/VAR1',
+          'https://api.vercel.com/v10/projects/prj_abc123/env?upsert=true',
           expect.objectContaining({
-            method: 'PATCH',
+            method: 'POST',
           })
         )
+
+        // Validate exact request body schema
+        const body = getRequestBody()
+        expect(body).toEqual({
+          key: 'VAR1',
+          value: 'new-value',
+          target: ['production'],
+          type: 'encrypted',
+        })
       })
 
       it('should deploy to preview target', async () => {
-        mockFetch
-          .mockResolvedValueOnce(createFetchResponse({ envs: [] }))
-          .mockResolvedValueOnce(createFetchResponse({ id: 'new-id' }))
+        mockFetch.mockResolvedValueOnce(createFetchResponse({ created: [{ id: 'new-id' }] }))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -376,18 +399,18 @@ describe('vercel plugin', () => {
 
         await provider.deploy(app, variables, target, createContext())
 
-        expect(mockFetch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            body: expect.stringContaining('"target":["preview"]'),
-          })
-        )
+        // Validate exact request body schema with preview target
+        const body = getRequestBody()
+        expect(body).toEqual({
+          key: 'VAR1',
+          value: 'value1',
+          target: ['preview'],
+          type: 'encrypted',
+        })
       })
 
       it('should deploy to development target', async () => {
-        mockFetch
-          .mockResolvedValueOnce(createFetchResponse({ envs: [] }))
-          .mockResolvedValueOnce(createFetchResponse({ id: 'new-id' }))
+        mockFetch.mockResolvedValueOnce(createFetchResponse({ created: [{ id: 'new-id' }] }))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -399,16 +422,18 @@ describe('vercel plugin', () => {
 
         await provider.deploy(app, variables, target, createContext())
 
-        expect(mockFetch).toHaveBeenCalledWith(
-          expect.any(String),
-          expect.objectContaining({
-            body: expect.stringContaining('"target":["development"]'),
-          })
-        )
+        // Validate exact request body schema with development target
+        const body = getRequestBody()
+        expect(body).toEqual({
+          key: 'VAR1',
+          value: 'value1',
+          target: ['development'],
+          type: 'encrypted',
+        })
       })
 
       it('should deploy multiple variables', async () => {
-        mockFetch.mockResolvedValue(createFetchResponse({ envs: [] }))
+        mockFetch.mockResolvedValue(createFetchResponse({ created: [{ id: 'new-id' }] }))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -428,27 +453,8 @@ describe('vercel plugin', () => {
         expect(result.message).toContain('Deployed 3 variables')
       })
 
-      it('should handle API error when fetching env vars', async () => {
-        mockFetch.mockResolvedValueOnce(createFetchResponse({}, false, 401))
-
-        const plugin = createVercelPlugin({
-          projectMapping: { web: 'prj_abc123' },
-        })
-        const provider = plugin.deploymentProviders![0]
-        const app = createAppInfo('web')
-        const variables = new Map([['VAR1', 'value1']])
-        const target = { name: 'production', id: 'prj_abc123' }
-
-        const result = await provider.deploy(app, variables, target, createContext())
-
-        expect(result.success).toBe(false)
-        expect(result.message).toContain('Failed to get env vars')
-      })
-
       it('should handle API error when creating env var', async () => {
-        mockFetch
-          .mockResolvedValueOnce(createFetchResponse({ envs: [] }))
-          .mockResolvedValueOnce(createFetchResponse({}, false, 500))
+        mockFetch.mockResolvedValueOnce(createFetchResponse({}, false, 500))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -464,12 +470,8 @@ describe('vercel plugin', () => {
         expect(result.message).toContain('Failed to create VAR1')
       })
 
-      it('should handle API error when updating env var', async () => {
-        mockFetch
-          .mockResolvedValueOnce(
-            createFetchResponse({ envs: [{ key: 'VAR1', value: 'old', target: ['production'] }] })
-          )
-          .mockResolvedValueOnce(createFetchResponse({}, false, 500))
+      it('should handle API error with 401 unauthorized', async () => {
+        mockFetch.mockResolvedValueOnce(createFetchResponse({}, false, 401))
 
         const plugin = createVercelPlugin({
           projectMapping: { web: 'prj_abc123' },
@@ -482,7 +484,7 @@ describe('vercel plugin', () => {
         const result = await provider.deploy(app, variables, target, createContext())
 
         expect(result.success).toBe(false)
-        expect(result.message).toContain('Failed to update VAR1')
+        expect(result.message).toContain('Failed to create VAR1')
       })
 
       it('should handle missing token error', async () => {

@@ -123,10 +123,22 @@ async function resolveSharedVariables(
   let sharedAdded = 0
   let sharedSkipped = 0
 
-  // Collect existing values from ALL apps
-  // If a shared variable exists in ANY app, we'll use that value
-  // (avoids re-prompting when some apps already have it configured)
+  // Collect existing values from root .env.local AND all apps
+  // Root .env.local is the canonical source for shared variables,
+  // and app .env.local files may also have values from previous syncs.
+  // If a shared variable exists in ANY of these, use that value (don't re-prompt).
   const existingValues = new Map<string, string>()
+
+  // Check root .env.local first (canonical source for shared vars)
+  const { localPath: rootLocalPath } = getRootEnvPaths(config, rootDir)
+  const rootEnvLocal = parseEnvLocal(rootLocalPath)
+  for (const [name, value] of rootEnvLocal.values) {
+    if (value && !existingValues.has(name)) {
+      existingValues.set(name, value)
+    }
+  }
+
+  // Then check each app's .env.local
   for (const app of apps) {
     const appEnvLocal = parseEnvLocal(app.envLocalPath)
     for (const [name, value] of appEnvLocal.values) {

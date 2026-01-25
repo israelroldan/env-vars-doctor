@@ -85,6 +85,28 @@ function createFetchResponse(data: unknown, ok = true, status = 200) {
   })
 }
 
+/**
+ * Extract the parsed request body from a mock fetch call
+ */
+function getRequestBody(callIndex = 0): Record<string, unknown> {
+  const call = mockFetch.mock.calls[callIndex]
+  if (!call || !call[1]?.body) {
+    throw new Error(`No fetch call found at index ${callIndex}`)
+  }
+  return JSON.parse(call[1].body as string)
+}
+
+/**
+ * Get the URL from a mock fetch call
+ */
+function getRequestUrl(callIndex = 0): string {
+  const call = mockFetch.mock.calls[callIndex]
+  if (!call) {
+    throw new Error(`No fetch call found at index ${callIndex}`)
+  }
+  return call[0] as string
+}
+
 describe('deploy command', () => {
   const originalEnv = process.env
   let consoleLogSpy: ReturnType<typeof vi.spyOn>
@@ -781,6 +803,206 @@ describe('deploy command', () => {
         'All shared and app-specific env vars are configured for production and non-production'
       )
       expect(result).toBe(0)
+    })
+  })
+
+  /**
+   * API Request Body Contract Tests
+   *
+   * These tests validate the exact structure of request bodies sent to Vercel API.
+   * They exist to catch breaking changes if the Vercel API format changes.
+   *
+   * IMPORTANT: Team-level and project-level endpoints use DIFFERENT formats:
+   * - Team-level (/v1/env): { evs: [{ key, value, type }], target: [...] }
+   * - Project-level (/v10/projects/{id}/env): { key, value, target: [...], type }
+   */
+  describe('API request body contract', () => {
+    it('should use correct body format for team-level shared env vars (evs array with target at top level)', async () => {
+      // Need workflow file for full path execution
+      const workflowContent = '["web"]="prj_abc123"'
+      vi.mocked(fs.existsSync).mockImplementation((p) => {
+        if (String(p).includes('deploy-production.yml')) return true
+        if (String(p).includes('.env.local')) return true
+        return false
+      })
+      vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
+
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
+      vi.mocked(parser.parseEnvLocal).mockReturnValue({
+        values: new Map([['SHARED_VAR', 'test-value']]),
+        comments: new Map(),
+        originalContent: '',
+      })
+      vi.mocked(scanner.scanWorkspaces).mockResolvedValue([])
+
+      // First call: fetch team vars (returns empty to trigger create)
+      // Second+ calls: create shared var API calls
+      mockFetch
+        .mockResolvedValueOnce(createFetchResponse({ data: [] })) // GET team vars
+        .mockResolvedValue(createFetchResponse({ id: 'new-id' })) // POST calls
+
+      mockQuestion.mockImplementation((_q: string, cb: (answer: string) => void) => {
+        cb('y') // confirm and accept default values
+      })
+
+      await runDeploy({
+        rootDir: '/project',
+        config: createDefaultConfig(),
+      })
+
+      // Find the POST call to /v1/env (team-level)
+      const teamEnvCalls = mockFetch.mock.calls.filter(
+        (call) => String(call[0]).includes('/v1/env') && call[1]?.method === 'POST'
+      )
+      expect(teamEnvCalls.length).toBeGreaterThan(0)
+
+      // Validate the first team-level POST request body structure
+      const body = JSON.parse(teamEnvCalls[0][1].body as string)
+
+      // Team-level MUST use evs array format
+      expect(body).toHaveProperty('evs')
+      expect(Array.isArray(body.evs)).toBe(true)
+      expect(body.evs.length).toBe(1)
+
+      // Target MUST be at top level, NOT inside evs items
+      expect(body).toHaveProperty('target')
+      expect(Array.isArray(body.target)).toBe(true)
+
+      // evs items should NOT have target (it's at top level for team endpoints)
+      expect(body.evs[0]).not.toHaveProperty('target')
+
+      // evs items should have key, value, type
+      expect(body.evs[0]).toHaveProperty('key', 'SHARED_VAR')
+      expect(body.evs[0]).toHaveProperty('value')
+      expect(body.evs[0]).toHaveProperty('type', 'encrypted')
+    })
+
+    it('should use correct body format for project-level env vars (single object, no evs wrapper)', async () => {
+      const workflowContent = '["web"]="prj_abc123"'
+      vi.mocked(fs.existsSync).mockImplementation((p) => {
+        if (String(p).includes('deploy-production.yml')) return true
+        if (String(p).includes('.env.local')) return true
+        return false
+      })
+      vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
+
+      const app = createAppInfo('web')
+      vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
+      vi.mocked(parser.parseEnvExample)
+        .mockReturnValueOnce(createEnvSchema()) // root (no shared vars)
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')])) // app has vars
+      vi.mocked(parser.parseEnvLocal).mockReturnValue({
+        values: new Map([['APP_VAR', 'app-value']]),
+        comments: new Map(),
+        originalContent: '',
+      })
+
+      mockFetch
+        .mockResolvedValueOnce(createFetchResponse({ data: [] })) // GET team vars
+        .mockResolvedValueOnce(createFetchResponse({ envs: [] })) // GET project vars (empty to trigger create)
+        .mockResolvedValue(createFetchResponse({ id: 'new-id' })) // POST calls
+
+      mockQuestion.mockImplementation((_q: string, cb: (answer: string) => void) => {
+        cb('y')
+      })
+
+      await runDeploy({
+        rootDir: '/project',
+        config: createDefaultConfig(),
+      })
+
+      // Find the POST call to /v10/projects/.../env (project-level)
+      const projectEnvCalls = mockFetch.mock.calls.filter(
+        (call) => String(call[0]).includes('/v10/projects/') && call[1]?.method === 'POST'
+      )
+      expect(projectEnvCalls.length).toBeGreaterThan(0)
+
+      // Validate the first project-level POST request body structure
+      const body = JSON.parse(projectEnvCalls[0][1].body as string)
+
+      // Project-level MUST NOT use evs wrapper
+      expect(body).not.toHaveProperty('evs')
+
+      // Must have key, value, target, type at top level
+      expect(body).toHaveProperty('key', 'APP_VAR')
+      expect(body).toHaveProperty('value')
+      expect(body).toHaveProperty('target')
+      expect(Array.isArray(body.target)).toBe(true)
+      expect(body).toHaveProperty('type', 'encrypted')
+    })
+
+    it('should include upsert=true query param for team-level endpoint', async () => {
+      const workflowContent = '["web"]="prj_abc123"'
+      vi.mocked(fs.existsSync).mockImplementation((p) => {
+        if (String(p).includes('deploy-production.yml')) return true
+        if (String(p).includes('.env.local')) return true
+        return false
+      })
+      vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
+
+      vi.mocked(parser.parseEnvExample).mockReturnValue(createEnvSchema([createVarDef('SHARED_VAR')]))
+      vi.mocked(parser.parseEnvLocal).mockReturnValue({
+        values: new Map([['SHARED_VAR', 'test-value']]),
+        comments: new Map(),
+        originalContent: '',
+      })
+      vi.mocked(scanner.scanWorkspaces).mockResolvedValue([])
+
+      mockFetch
+        .mockResolvedValueOnce(createFetchResponse({ data: [] }))
+        .mockResolvedValue(createFetchResponse({ id: 'new-id' }))
+
+      mockQuestion.mockImplementation((_q: string, cb: (answer: string) => void) => cb('y'))
+
+      await runDeploy({
+        rootDir: '/project',
+        config: createDefaultConfig(),
+      })
+
+      const teamEnvCalls = mockFetch.mock.calls.filter(
+        (call) => String(call[0]).includes('/v1/env') && call[1]?.method === 'POST'
+      )
+      expect(teamEnvCalls.length).toBeGreaterThan(0)
+      expect(String(teamEnvCalls[0][0])).toContain('upsert=true')
+    })
+
+    it('should include upsert=true query param for project-level endpoint', async () => {
+      const workflowContent = '["web"]="prj_abc123"'
+      vi.mocked(fs.existsSync).mockImplementation((p) => {
+        if (String(p).includes('deploy-production.yml')) return true
+        if (String(p).includes('.env.local')) return true
+        return false
+      })
+      vi.mocked(fs.readFileSync).mockReturnValue(workflowContent)
+
+      const app = createAppInfo('web')
+      vi.mocked(scanner.scanWorkspaces).mockResolvedValue([app])
+      vi.mocked(parser.parseEnvExample)
+        .mockReturnValueOnce(createEnvSchema())
+        .mockReturnValueOnce(createEnvSchema([createVarDef('APP_VAR')]))
+      vi.mocked(parser.parseEnvLocal).mockReturnValue({
+        values: new Map([['APP_VAR', 'app-value']]),
+        comments: new Map(),
+        originalContent: '',
+      })
+
+      mockFetch
+        .mockResolvedValueOnce(createFetchResponse({ data: [] }))
+        .mockResolvedValueOnce(createFetchResponse({ envs: [] }))
+        .mockResolvedValue(createFetchResponse({ id: 'new-id' }))
+
+      mockQuestion.mockImplementation((_q: string, cb: (answer: string) => void) => cb('y'))
+
+      await runDeploy({
+        rootDir: '/project',
+        config: createDefaultConfig(),
+      })
+
+      const projectEnvCalls = mockFetch.mock.calls.filter(
+        (call) => String(call[0]).includes('/v10/projects/') && call[1]?.method === 'POST'
+      )
+      expect(projectEnvCalls.length).toBeGreaterThan(0)
+      expect(String(projectEnvCalls[0][0])).toContain('upsert=true')
     })
   })
 })
