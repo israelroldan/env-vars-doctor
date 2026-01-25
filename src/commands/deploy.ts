@@ -234,23 +234,36 @@ async function applyPlannedActions(
       if (action.promptValue) {
         value = await promptInput(`Production value for ${action.key}`, action.value)
       }
-      const body: Record<string, unknown> = {
+      // Team-level v1/env expects evs array with target at top level
+      const envVar: Record<string, unknown> = {
         key: action.key,
         value,
-        target: action.targets,
         type: 'encrypted',
+      }
+      const body: Record<string, unknown> = {
+        evs: [envVar],
+        target: action.targets,
       }
       if (action.allCustomEnvs) {
         body.includeAllEnvironments = true
         body.includeAllCustomEnvironments = true
       }
-      const resp = await fetch(`https://api.vercel.com/v1/env?teamId=${teamId}`, {
+      const url = `https://api.vercel.com/v1/env?teamId=${teamId}&upsert=true`
+      if (process.env.DEBUG) {
+        console.log(`[DEBUG] POST ${url}`)
+        console.log(`[DEBUG] Body: ${JSON.stringify(body, null, 2)}`)
+      }
+      const resp = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
       })
       if (!resp.ok) {
         const err = await resp.text()
+        if (process.env.DEBUG) {
+          console.log(`[DEBUG] Response status: ${resp.status}`)
+          console.log(`[DEBUG] Response body: ${err}`)
+        }
         throw new Error(
           `Failed to create shared var ${action.key} (${action.targets.join(', ')}): ${resp.status} ${resp.statusText} ${err}`
         )
@@ -301,6 +314,7 @@ async function applyPlannedActions(
       if (action.promptValue) {
         value = await promptInput(`Production value for ${action.key} (${action.projectName})`, action.value)
       }
+      // Project-level v10 endpoint expects a single object (not evs array)
       const body: Record<string, unknown> = {
         key: action.key,
         value,
@@ -311,16 +325,22 @@ async function applyPlannedActions(
         body.includeAllEnvironments = true
         body.includeAllCustomEnvironments = true
       }
-      const resp = await fetch(
-        `https://api.vercel.com/v9/projects/${action.projectId}/env?teamId=${teamId}`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body),
-        }
-      )
+      const url = `https://api.vercel.com/v10/projects/${action.projectId}/env?teamId=${teamId}&upsert=true`
+      if (process.env.DEBUG) {
+        console.log(`[DEBUG] POST ${url}`)
+        console.log(`[DEBUG] Body: ${JSON.stringify(body, null, 2)}`)
+      }
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      })
       if (!resp.ok) {
         const err = await resp.text()
+        if (process.env.DEBUG) {
+          console.log(`[DEBUG] Response status: ${resp.status}`)
+          console.log(`[DEBUG] Response body: ${err}`)
+        }
         throw new Error(
           `Failed to create project var ${action.key} for ${action.projectName}: ${resp.status} ${resp.statusText} ${err}`
         )

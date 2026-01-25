@@ -15,17 +15,6 @@ import type {
 } from '../../core/types.js'
 
 // =============================================================================
-// Types
-// =============================================================================
-
-interface VercelEnvVar {
-  key: string
-  value: string
-  target: ('production' | 'preview' | 'development')[]
-  type: 'plain' | 'encrypted' | 'secret'
-}
-
-// =============================================================================
 // State
 // =============================================================================
 
@@ -140,21 +129,8 @@ async function vercelRequest(
 }
 
 /**
- * Get existing environment variables for a project
- */
-async function getProjectEnvVars(projectId: string): Promise<VercelEnvVar[]> {
-  const response = await vercelRequest('GET', `/v9/projects/${projectId}/env`)
-
-  if (!response.ok) {
-    throw new Error(`Failed to get env vars: ${response.statusText}`)
-  }
-
-  const data = (await response.json()) as { envs?: VercelEnvVar[] }
-  return data.envs || []
-}
-
-/**
  * Create or update an environment variable
+ * Uses upsert=true to create or update in a single call
  */
 async function upsertEnvVar(
   projectId: string,
@@ -169,33 +145,18 @@ async function upsertEnvVar(
         ? ['preview']
         : ['development']
 
-  // Check if var exists
-  const existingVars = await getProjectEnvVars(projectId)
-  const existing = existingVars.find((v) => v.key === key)
+  // Use upsert=true to create or update in a single call
+  // Project-level v10 endpoint expects a single object (not evs array)
+  const response = await vercelRequest('POST', `/v10/projects/${projectId}/env?upsert=true`, {
+    key,
+    value,
+    target: targets,
+    type: 'encrypted',
+  })
 
-  if (existing) {
-    // Update existing
-    const response = await vercelRequest('PATCH', `/v9/projects/${projectId}/env/${key}`, {
-      value,
-      target: targets,
-      type: 'encrypted',
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to update ${key}: ${response.statusText}`)
-    }
-  } else {
-    // Create new
-    const response = await vercelRequest('POST', `/v10/projects/${projectId}/env`, {
-      key,
-      value,
-      target: targets,
-      type: 'encrypted',
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to create ${key}: ${response.statusText}`)
-    }
+  if (!response.ok) {
+    const errorBody = await response.text()
+    throw new Error(`Failed to create ${key} (${targets.join(', ')}): ${response.status} ${response.statusText} ${errorBody}`)
   }
 }
 
