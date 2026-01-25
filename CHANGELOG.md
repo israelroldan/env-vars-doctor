@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/israelroldan/env-vars-doctor/compare/v1.4.0...v1.4.1) (2026-01-25)
+
+
+### Bug Fixes
+
+* update Vercel API request formats and read root .env.local as source ([#15](https://github.com/israelroldan/env-vars-doctor/issues/15)) ([6461e17](https://github.com/israelroldan/env-vars-doctor/commit/6461e173e2eacff5c11783ab6fc437a233367867))
+
 ## [1.4.0](https://github.com/israelroldan/env-vars-doctor/compare/v1.3.0...v1.4.0) (2026-01-08)
 
 
